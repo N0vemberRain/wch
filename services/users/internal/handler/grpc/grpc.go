@@ -6,6 +6,8 @@ import (
 	"strings"
 
 	"wch/gen"
+	"wch/pkg/models"
+
 	//"wch/services/users/internal/controller"
 	users "wch/services/users/internal"
 	"wch/services/users/internal/controller"
@@ -103,6 +105,54 @@ func (h *Handler) SearchUsers(ctx context.Context, req *gen.SearchUsersRequest) 
 	resp := &gen.SearchUsersResponse{}
 	for _, u := range usersList {
 		resp.Users = append(resp.Users, model.UserToProto(u))
+	}
+
+	return resp, nil
+}
+
+func (h *Handler) GetDepByID(ctx context.Context, req *gen.GetDepByIDRequest) (*gen.GetDepByIDResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
+	}
+
+	dep, err := h.dep_ctrl.GetByID(ctx, int(req.Id))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &gen.GetDepByIDResponse{
+		Dep: models.DepToProto(dep),
+	}, nil
+}
+
+func (h *Handler) GetDepByName(ctx context.Context, req *gen.GetDepByNameRequest) (*gen.GetDepByNameResponse, error) {
+	if req == nil || req.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "nil request or empty name")
+	}
+
+	dep, err := h.dep_ctrl.GetByName(ctx, req.Name)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	return &gen.GetDepByNameResponse{
+		Dep: models.DepToProto(dep),
+	}, nil
+}
+
+func (h *Handler) ListDeps(ctx context.Context, req *gen.ListDepsRequest) (*gen.ListDepsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "requset is empty")
+	}
+
+	deps, err := h.dep_ctrl.GetAll(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	resp := &gen.ListDepsResponse{}
+	for _, d := range deps {
+		resp.Deps = append(resp.Deps, models.DepToProto(d))
 	}
 
 	return resp, nil

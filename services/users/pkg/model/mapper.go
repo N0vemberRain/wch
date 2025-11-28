@@ -24,10 +24,6 @@ func UserToProto(u *User) *gen.User {
 }
 
 func UserFromProto(u *gen.User) (*User, error) {
-	// id, err := uuid.Parse(u.Id)
-	// if err != nil {
-	// 	return nil, errors.New("user id is invalid")
-	// }
 	return &User{
 		Username:     u.Username,
 		Email:        u.Email,

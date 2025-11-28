@@ -93,6 +93,7 @@ func main() {
 	srv := grpc.NewServer()
 	gen.RegisterUsersServiceServer(srv, h)
 	reflection.Register(srv)
+	gen.RegisterDepsServiceServer(srv, h)
 	srv.Serve(lis)
 }
 

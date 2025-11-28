@@ -1,0 +1,38 @@
+syntax = "proto3";
+option go_package = "/gen";
+
+message Department {
+    int32 id = 1;
+    string name = 2;
+}
+
+service DepsService {
+    rpc GetDepByID(GetDepByIDRequest) returns (GetDepByIDResponse);
+    rpc GetDepByName(GetDepByNameRequest) returns (GetDepByNameResponse);
+
+    rpc ListDeps(ListDepsRequest) returns (ListDepsResponse); 
+}
+
+message GetDepByIDRequest {
+    int32 id = 1;
+}
+
+message GetDepByIDResponse {
+    Department dep = 1;
+}
+
+message GetDepByNameRequest {
+    string name = 1;
+}
+
+message GetDepByNameResponse {
+    Department dep = 1;
+}
+
+message ListDepsRequest {
+
+}
+
+message ListDepsResponse {
+    repeated Department deps = 1;
+}
