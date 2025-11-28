@@ -34,8 +34,8 @@ func (c *UserController) CreateUser(ctx context.Context, u *model.User) error {
 	return nil
 }
 
-// Get returns the user's details
-func (c *UserController) Get(ctx context.Context, id string) (*model.User, error) {
+// GetByID returns the user's details
+func (c *UserController) GetByID(ctx context.Context, id string) (*model.User, error) {
 	userdata, err := c.repo.GetUserByID(ctx, id)
 	if err != nil && errors.Is(err, errors.New("user not found")) {
 		return nil, ErrNotFound
@@ -44,4 +44,22 @@ func (c *UserController) Get(ctx context.Context, id string) (*model.User, error
 	}
 
 	return userdata, nil
+}
+
+// GetByEmail returns the user's details
+func (c *UserController) GetByEmail(ctx context.Context, email string) (*model.User, error) {
+	userdata, err := c.repo.GetUserByEmail(ctx, email)
+	if err != nil && errors.Is(err, errors.New("user not found")) {
+		return nil, ErrNotFound
+	} else if err != nil {
+		return nil, err
+	}
+
+	return userdata, nil
+}
+
+func (c *UserController) SearchUsers(ctx context.Context, filter users.SearchFilter) (
+	[]*model.User, error,
+) {
+	return c.repo.SearchUsers(ctx, filter)
 }

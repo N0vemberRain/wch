@@ -7,6 +7,7 @@ import (
 
 	"wch/gen"
 	//"wch/services/users/internal/controller"
+	users "wch/services/users/internal"
 	"wch/services/users/internal/controller"
 	"wch/services/users/pkg/model"
 
@@ -52,12 +53,12 @@ func (h *Handler) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*
 	return &gen.UserResponse{}, nil
 }
 
-// GetUserDetails returns user details by id.
-func (h *Handler) GetUser(ctx context.Context, req *gen.GetUserRequest) (*gen.GetUserResponse, error) {
+// GetUserByID returns user details by id.
+func (h *Handler) GetUserByID(ctx context.Context, req *gen.GetUserByIDRequest) (*gen.GetUserResponse, error) {
 	if req == nil || req.UserId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
 	}
-	u, err := h.usr_ctrl.Get(ctx, req.UserId)
+	u, err := h.usr_ctrl.GetByID(ctx, req.UserId)
 	if err != nil && errors.Is(err, controller.ErrNotFound) {
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	} else if err != nil {
@@ -66,4 +67,43 @@ func (h *Handler) GetUser(ctx context.Context, req *gen.GetUserRequest) (*gen.Ge
 	return &gen.GetUserResponse{
 		User: model.UserToProto(u),
 	}, nil
+}
+
+// GetUserByEmail returns user details by id.
+func (h *Handler) GetUserByEmail(ctx context.Context, req *gen.GetUserByEmailRequest) (*gen.GetUserResponse, error) {
+	if req == nil || req.Email == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty email")
+	}
+	u, err := h.usr_ctrl.GetByEmail(ctx, req.Email)
+	if err != nil && errors.Is(err, controller.ErrNotFound) {
+		return nil, status.Errorf(codes.NotFound, err.Error())
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+	return &gen.GetUserResponse{
+		User: model.UserToProto(u),
+	}, nil
+}
+
+func (h *Handler) SearchUsers(ctx context.Context, req *gen.SearchUsersRequest) (*gen.SearchUsersResponse, error) {
+	filter := users.SearchFilter{
+		Email:        req.Email,
+		Username:     req.Username,
+		FirstName:    req.FirstName,
+		LastName:     req.LastName,
+		Surname:      req.Surname,
+		DepartmentID: int(req.DepartmentId),
+	}
+
+	usersList, err := h.usr_ctrl.SearchUsers(ctx, filter)
+	if err != nil {
+		return nil, status.Errorf(codes.NotFound, err.Error())
+	}
+
+	resp := &gen.SearchUsersResponse{}
+	for _, u := range usersList {
+		resp.Users = append(resp.Users, model.UserToProto(u))
+	}
+
+	return resp, nil
 }

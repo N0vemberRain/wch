@@ -5,6 +5,7 @@ import (
 
 	"wch/pkg/models"
 	dep "wch/pkg/models"
+	users "wch/services/users/internal"
 	"wch/services/users/pkg/model"
 )
 
@@ -15,6 +16,7 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 	UpdateUser(ctx context.Context, u *model.User) error
 	DeleteUser(ctx context.Context, id string) error
+	SearchUsers(ctx context.Context, filter users.SearchFilter) ([]*model.User, error)
 }
 
 type DepartmentRepository interface {

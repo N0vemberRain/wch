@@ -2,6 +2,9 @@ package repository
 
 import (
 	"context"
+	"strconv"
+	users "wch/services/users/internal"
+	"wch/services/users/pkg/model"
 	usr "wch/services/users/pkg/model"
 
 	"database/sql"
@@ -94,4 +97,69 @@ func (r *UserRepositoryPg) UpdateUser(ctx context.Context, u *usr.User) error {
 
 func (r *UserRepositoryPg) DeleteUser(ctx context.Context, id string) error {
 	return nil
+}
+
+func (r *UserRepositoryPg) SearchUsers(ctx context.Context, filter users.SearchFilter) (
+	[]*model.User,
+	error,
+) {
+	query := `SELECT id, username, email, 
+		first_name, last_name, surname, avatar_url, 
+		department_id
+		FROM users WHERE `
+	i := 0
+	args := []interface{}{}
+	if filter.Email != "" {
+		query += " email ILIKE $"
+		query += strconv.Itoa(i + 1)
+		args = append(args, "%"+filter.Email+"%")
+		i++
+	}
+	if filter.Username != "" {
+		if len(args) != 0 {
+			query += " AND username ILIKE $"
+		} else {
+			query += " username ILIKE $"
+		}
+		query += strconv.Itoa(i + 1)
+		args = append(args, "%"+filter.Username+"%")
+		i++
+	}
+	if filter.FirstName != "" {
+		if len(args) != 0 {
+			query += " AND first_name ILIKE $"
+		} else {
+			query += " first_name ILIKE $"
+		}
+		query += strconv.Itoa(i + 1)
+		args = append(args, "%"+filter.FirstName+"%")
+		i++
+	}
+
+	query += " ORDER BY created_at;"
+	rows, err := r.db.Query(query, args...)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var usersList []*model.User
+	for rows.Next() {
+		var u model.User
+		if err := rows.Scan(
+			&u.ID,
+			&u.Username,
+			&u.Email,
+			&u.FirstName,
+			&u.LastName,
+			&u.Surname,
+			&u.AvatarURL,
+			&u.DepartmentID,
+		); err != nil {
+			return nil, err
+		}
+		usersList = append(usersList, &u)
+	}
+
+	return usersList, nil
 }

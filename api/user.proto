@@ -20,7 +20,12 @@ message User {
 
 service UsersService {
 	rpc CreateUser(CreateUserRequest) returns (UserResponse);
-	rpc GetUser(GetUserRequest) returns (GetUserResponse);
+
+	rpc GetUserByID(GetUserByIDRequest) returns (GetUserResponse);
+	rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserResponse);
+	
+	rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
+	
 	rpc UpdateUser(UpdateUserRequest) returns (UserResponse);
 	rpc DeleteUser(DeleteUserRequest) returns (UserResponse);
 	rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
@@ -30,8 +35,12 @@ message CreateUserRequest {
 	User user = 1;
 }
 
-message GetUserRequest {
+message GetUserByIDRequest {
 	string user_id = 1;
+}
+
+message GetUserByEmailRequest {
+	string email = 1;
 }
 
 message GetUserResponse {
@@ -56,4 +65,17 @@ message ListUsersRequest {
 
 message ListUsersResponse {
 	
+}
+
+message SearchUsersRequest {
+    string username = 1;     // optional
+    string email = 2;        // optional
+    string first_name = 3;   // optional
+    string last_name = 4;    // optional
+	string surname = 5;			// optional
+    int32 department_id = 6;// optional
+}
+
+message SearchUsersResponse {
+	repeated User users = 1;
 }

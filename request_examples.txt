@@ -1,1 +1,7 @@
 grpc -palintext -d '{"username": "Alice", "email":"alice@yandex.ru","password_hash":"123"}' localhost:8082 UserdataService.PutUserdata
+
+grpcurl -plaintext -d '{\"username\": \"Alice\", \"email\":\"alice@yandex.ru\"}' localhost:8082 UsersService.SearchUsers
+
+grpcurl -plaintext -d '{\"username\": \"Alice\", \"email\":\"alice@yandex.ru\"}' localhost:8082 UsersService.SearchUsers
+
+grpcurl -plaintext -d '{\"username\": \"Igor\"}' localhost:8082 UsersService.SearchUsers
