@@ -64,7 +64,7 @@ message ListUsersRequest {
 }
 
 message ListUsersResponse {
-	
+	repeated User users = 1;
 }
 
 message SearchUsersRequest {

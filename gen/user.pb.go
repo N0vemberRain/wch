@@ -492,6 +492,7 @@ func (*ListUsersRequest) Descriptor() ([]byte, []int) {
 
 type ListUsersResponse struct {
 	state         protoimpl.MessageState `protogen:"open.v1"`
+	Users         []*User                `protobuf:"bytes,1,rep,name=users,proto3" json:"users,omitempty"`
 	unknownFields protoimpl.UnknownFields
 	sizeCache     protoimpl.SizeCache
 }
@@ -524,6 +525,13 @@ func (x *ListUsersResponse) ProtoReflect() protoreflect.Message {
 // Deprecated: Use ListUsersResponse.ProtoReflect.Descriptor instead.
 func (*ListUsersResponse) Descriptor() ([]byte, []int) {
 	return file_api_user_proto_rawDescGZIP(), []int{9}
+}
+
+func (x *ListUsersResponse) GetUsers() []*User {
+	if x != nil {
+		return x.Users
+	}
+	return nil
 }
 
 type SearchUsersRequest struct {
@@ -690,8 +698,9 @@ const file_api_user_proto_rawDesc = "" +
 	"\x11DeleteUserRequest\x12\x17\n" +
 	"\auser_id\x18\x01 \x01(\tR\x06userId\"\x0e\n" +
 	"\fUserResponse\"\x12\n" +
-	"\x10ListUsersRequest\"\x13\n" +
-	"\x11ListUsersResponse\"\xc1\x01\n" +
+	"\x10ListUsersRequest\"0\n" +
+	"\x11ListUsersResponse\x12\x1b\n" +
+	"\x05users\x18\x01 \x03(\v2\x05.UserR\x05users\"\xc1\x01\n" +
 	"\x12SearchUsersRequest\x12\x1a\n" +
 	"\busername\x18\x01 \x01(\tR\busername\x12\x14\n" +
 	"\x05email\x18\x02 \x01(\tR\x05email\x12\x1d\n" +
@@ -748,26 +757,27 @@ var file_api_user_proto_depIdxs = []int32{
 	0,  // 2: CreateUserRequest.user:type_name -> User
 	0,  // 3: GetUserResponse.user:type_name -> User
 	0,  // 4: UpdateUserRequest.user:type_name -> User
-	0,  // 5: SearchUsersResponse.users:type_name -> User
-	1,  // 6: UsersService.CreateUser:input_type -> CreateUserRequest
-	2,  // 7: UsersService.GetUserByID:input_type -> GetUserByIDRequest
-	3,  // 8: UsersService.GetUserByEmail:input_type -> GetUserByEmailRequest
-	10, // 9: UsersService.SearchUsers:input_type -> SearchUsersRequest
-	5,  // 10: UsersService.UpdateUser:input_type -> UpdateUserRequest
-	6,  // 11: UsersService.DeleteUser:input_type -> DeleteUserRequest
-	8,  // 12: UsersService.ListUsers:input_type -> ListUsersRequest
-	7,  // 13: UsersService.CreateUser:output_type -> UserResponse
-	4,  // 14: UsersService.GetUserByID:output_type -> GetUserResponse
-	4,  // 15: UsersService.GetUserByEmail:output_type -> GetUserResponse
-	11, // 16: UsersService.SearchUsers:output_type -> SearchUsersResponse
-	7,  // 17: UsersService.UpdateUser:output_type -> UserResponse
-	7,  // 18: UsersService.DeleteUser:output_type -> UserResponse
-	9,  // 19: UsersService.ListUsers:output_type -> ListUsersResponse
-	13, // [13:20] is the sub-list for method output_type
-	6,  // [6:13] is the sub-list for method input_type
-	6,  // [6:6] is the sub-list for extension type_name
-	6,  // [6:6] is the sub-list for extension extendee
-	0,  // [0:6] is the sub-list for field type_name
+	0,  // 5: ListUsersResponse.users:type_name -> User
+	0,  // 6: SearchUsersResponse.users:type_name -> User
+	1,  // 7: UsersService.CreateUser:input_type -> CreateUserRequest
+	2,  // 8: UsersService.GetUserByID:input_type -> GetUserByIDRequest
+	3,  // 9: UsersService.GetUserByEmail:input_type -> GetUserByEmailRequest
+	10, // 10: UsersService.SearchUsers:input_type -> SearchUsersRequest
+	5,  // 11: UsersService.UpdateUser:input_type -> UpdateUserRequest
+	6,  // 12: UsersService.DeleteUser:input_type -> DeleteUserRequest
+	8,  // 13: UsersService.ListUsers:input_type -> ListUsersRequest
+	7,  // 14: UsersService.CreateUser:output_type -> UserResponse
+	4,  // 15: UsersService.GetUserByID:output_type -> GetUserResponse
+	4,  // 16: UsersService.GetUserByEmail:output_type -> GetUserResponse
+	11, // 17: UsersService.SearchUsers:output_type -> SearchUsersResponse
+	7,  // 18: UsersService.UpdateUser:output_type -> UserResponse
+	7,  // 19: UsersService.DeleteUser:output_type -> UserResponse
+	9,  // 20: UsersService.ListUsers:output_type -> ListUsersResponse
+	14, // [14:21] is the sub-list for method output_type
+	7,  // [7:14] is the sub-list for method input_type
+	7,  // [7:7] is the sub-list for extension type_name
+	7,  // [7:7] is the sub-list for extension extendee
+	0,  // [0:7] is the sub-list for field type_name
 }
 
 func init() { file_api_user_proto_init() }

@@ -163,3 +163,31 @@ func (r *UserRepositoryPg) SearchUsers(ctx context.Context, filter users.SearchF
 
 	return usersList, nil
 }
+
+func (r *UserRepositoryPg) GetAll(ctx context.Context) ([]*model.User, error) {
+	rows, err := r.db.Query("SELECT id, username, email, first_name, last_name, surname, avatar_url, department_id FROM users;")
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	var usersList []*model.User
+	for rows.Next() {
+		var u model.User
+		if err := rows.Scan(
+			&u.ID,
+			&u.Username,
+			&u.Email,
+			&u.FirstName,
+			&u.LastName,
+			&u.Surname,
+			&u.AvatarURL,
+			&u.DepartmentID,
+		); err != nil {
+			return nil, err
+		}
+		usersList = append(usersList, &u)
+	}
+
+	return usersList, nil
+}

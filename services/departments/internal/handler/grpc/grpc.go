@@ -6,6 +6,7 @@ import (
 	"strings"
 
 	"wch/gen"
+	"wch/pkg/models"
 
 	//"wch/services/users/internal/controller"
 	users "wch/services/users/internal"
@@ -20,11 +21,12 @@ import (
 type Handler struct {
 	gen.UnimplementedUsersServiceServer
 	usr_ctrl *controller.UserController
+	dep_ctrl *controller.DepartmentController
 }
 
 // New creates a new user gRPC handler.
-func New(uc *controller.UserController) *Handler {
-	return &Handler{usr_ctrl: uc}
+func New(uc *controller.UserController, dc *controller.DepartmentController) *Handler {
+	return &Handler{usr_ctrl: uc, dep_ctrl: dc}
 }
 
 func (h *Handler) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.UserResponse, error) {
@@ -59,7 +61,7 @@ func (h *Handler) GetUserByID(ctx context.Context, req *gen.GetUserByIDRequest) 
 		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
 	}
 	u, err := h.usr_ctrl.GetByID(ctx, req.UserId)
-	if err != nil && errors.Is(err, users.ErrNotFound) {
+	if err != nil && errors.Is(err, controller.ErrNotFound) {
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
@@ -75,7 +77,7 @@ func (h *Handler) GetUserByEmail(ctx context.Context, req *gen.GetUserByEmailReq
 		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty email")
 	}
 	u, err := h.usr_ctrl.GetByEmail(ctx, req.Email)
-	if err != nil && errors.Is(err, users.ErrNotFound) {
+	if err != nil && errors.Is(err, controller.ErrNotFound) {
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
@@ -108,19 +110,49 @@ func (h *Handler) SearchUsers(ctx context.Context, req *gen.SearchUsersRequest) 
 	return resp, nil
 }
 
-func (h *Handler) ListUsers(ctx context.Context, req *gen.ListUsersRequest) (*gen.ListUsersResponse, error) {
-	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, "request is empty")
+func (h *Handler) GetDepByID(ctx context.Context, req *gen.GetDepByIDRequest) (*gen.GetDepByIDResponse, error) {
+	if req == nil || req.Id == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
 	}
 
-	users, err := h.usr_ctrl.GetAll(ctx)
+	dep, err := h.dep_ctrl.GetByID(ctx, int(req.Id))
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &gen.GetDepByIDResponse{
+		Dep: models.DepToProto(dep),
+	}, nil
+}
+
+func (h *Handler) GetDepByName(ctx context.Context, req *gen.GetDepByNameRequest) (*gen.GetDepByNameResponse, error) {
+	if req == nil || req.Name == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "nil request or empty name")
+	}
+
+	dep, err := h.dep_ctrl.GetByName(ctx, req.Name)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	resp := &gen.ListUsersResponse{}
-	for _, u := range users {
-		resp.Users = append(resp.Users, model.UserToProto(u))
+	return &gen.GetDepByNameResponse{
+		Dep: models.DepToProto(dep),
+	}, nil
+}
+
+func (h *Handler) ListDeps(ctx context.Context, req *gen.ListDepsRequest) (*gen.ListDepsResponse, error) {
+	if req == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "requset is empty")
+	}
+
+	deps, err := h.dep_ctrl.GetAll(ctx)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	resp := &gen.ListDepsResponse{}
+	for _, d := range deps {
+		resp.Deps = append(resp.Deps, models.DepToProto(d))
 	}
 
 	return resp, nil
