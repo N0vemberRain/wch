@@ -12,8 +12,8 @@ import (
 
 	"wch/pkg/discovery"
 	discmemory "wch/pkg/discovery/memory"
-	"wch/services/users/internal/controller"
-	"wch/services/users/internal/repository"
+	"wch/services/departments/internal/controller"
+	"wch/services/departments/internal/repository"
 
 	//mdgateway "wch/users/internal/gateway/metadata/http"
 	//httphandler "wch/users/internal/handler/http"
@@ -21,7 +21,7 @@ import (
 	"wch/gen"
 	//"wch/pkg/discovery/memory"
 
-	grpchandler "wch/services/users/internal/handler/grpc"
+	grpchandler "wch/services/departments/internal/handler/grpc"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -30,23 +30,11 @@ import (
 const serviceName = "users"
 
 func main() {
-	// log.Println("Starting the users service")
-	// registry, err := static.NewRegistry(map[string][]string{
-	// 	"metadata": {"localhost:8081"},
-	// 	"users":    {"localhost:8082"},
-	// })
-
-	// ctx := context.Background()
-	// if err := registry.Register(ctx, "users", "localhost:8082"); err != nil {
-	// 	panic(err)
-	// }
-	// defer registry.Deregister(ctx, "users")
-
 	var port int
-	flag.IntVar(&port, "port", 8082, "API handler port")
+	flag.IntVar(&port, "port", 8083, "API handler port")
 	flag.Parse()
 
-	log.Println("Starting the rating service on port %d", port)
+	log.Printf("Starting the rating service on port %d\n", port)
 	//registry := discmemory.NewRegistry("localhost:8500")
 	registry := discmemory.NewRegistry()
 	//if err := nil {
@@ -79,65 +67,17 @@ func main() {
 	if err != nil {
 		log.Fatalf("Database settings: %s", err)
 	}
-	departRepo := repository.NewDepartmentRepositoryPg(db)
-	depsCtrl := controller.NewDepartmentController(departRepo)
+	departRepo := repository.NewRepositoryPg(db)
+	depsCtrl := controller.NewController(departRepo)
 
-	userRepo := repository.NewUserRepositoryPg(db)
-	userCtrl := controller.NewUserController(userRepo)
-	h := grpchandler.New(userCtrl, depsCtrl)
-	lis, err := net.Listen("tcp", "localhost:8082")
+	h := grpchandler.New(depsCtrl)
+	lis, err := net.Listen("tcp", "localhost:8083")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
 	srv := grpc.NewServer()
-	gen.RegisterUsersServiceServer(srv, h)
-	reflection.Register(srv)
 	gen.RegisterDepsServiceServer(srv, h)
+	reflection.Register(srv)
 	srv.Serve(lis)
 }
-
-// func main() {
-// 	var port int
-// 	flag.IntVar(&port, "port", 8082, "API handler port")
-// 	flag.Parse()
-
-// 	log.Println("Starting the rating service on port %d", port)
-// 	//registry := discmemory.NewRegistry("localhost:8500")
-// 	registry := discmemory.NewRegistry()
-// 	//if err := nil {
-// 	//panic(err)
-// 	//}
-// 	ctx := context.Background()
-// 	instanceID := discovery.GenerateInstanceID(serviceName)
-
-// 	if err := registry.Register(
-// 		ctx, instanceID,
-// 		serviceName,
-// 		fmt.Sprintf("localhost:%d", port),
-// 	); err != nil {
-// 		panic(err)
-// 	}
-
-// 	go func() {
-// 		for {
-// 			err := registry.ReportHealthState(instanceID, serviceName)
-// 			if err != nil {
-// 				log.Println("Failed to report healthy state: " + err.Error())
-// 			}
-// 			time.Sleep(1 * time.Second)
-// 		}
-// 	}()
-
-// 	defer registry.Deregister(ctx, instanceID, serviceName)
-
-// 	metadataGateway := mdgateway.New(registry)
-// 	ctrl := users.New(metadataGateway)
-// 	h := httphandler.New(ctrl)
-
-// 	//http.Handle("/users", http.HandleFunc(h.GetOrgDetails))
-// 	http.HandleFunc("/users", h.GetUserDetails)
-// 	if err := http.ListenAndServe(":8083", nil); err != nil {
-// 		panic(err)
-// 	}
-// }

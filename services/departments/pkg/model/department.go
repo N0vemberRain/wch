@@ -1,4 +1,4 @@
-package models
+package model
 
 type Department struct {
 	ID          int    `db:"id" json: "id"`
