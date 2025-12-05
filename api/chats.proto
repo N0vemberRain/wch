@@ -1,0 +1,52 @@
+syntax = "proto3";
+option go_package = "/gen";
+
+import "google/protobuf/timestamp.proto";
+
+enum ChatType {
+    CHAT_TYPE_UNSPECIFIED = 0;  // Always required for proto3 enums
+    DIRECT = 1;
+    GROUP = 2;
+}
+
+message Chat {
+    string id = 1;
+    ChatType type = 2;
+    string name = 3;
+
+    google.protobuf.Timestamp created_at = 4;
+	google.protobuf.Timestamp updated_at = 5; 
+}
+
+service ChatsService {
+    rpc CreateChat(CreateChatRequest) returns (ChatResponse);
+    rpc GetChat(GetChatRequest) returns (GetChatResponse);
+    rpc UpdateChat(UpdateChatRequest) returns (ChatResponse);
+    rpc DeleteChat(DeleteChatRequest) returns (ChatResponse);
+}
+
+message CreateChatRequest {
+    Chat chat = 1;
+}
+
+message UpdateChatRequest {
+    Chat chat = 1;
+}
+
+message DeleteChatRequest {
+    string chat_id = 1;
+}
+
+message GetChatRequest {
+    string chat_id = 1;
+}
+
+message GetChatResponse {
+    Chat chat = 1;
+}
+
+message ChatResponse {
+    string chat_id = 1;
+}
+
+
