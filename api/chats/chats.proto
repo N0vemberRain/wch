@@ -1,0 +1,82 @@
+syntax = "proto3";
+option go_package = "/gen/chats";
+
+import "google/protobuf/timestamp.proto";
+
+message Chat {
+    string id = 1;
+    string type = 2;
+    string name = 3;
+
+    google.protobuf.Timestamp created_at = 4;
+	google.protobuf.Timestamp updated_at = 5; 
+}
+
+enum ChatParticipantRole {
+    CHAT_PARTICIPANT_ROLE_UNSPECIFIED = 0;
+    CHAT_PARTICIPANT_ROLE_MEMBER = 1;
+    CHAT_PARTICIPANT_ROLE_ADMIN = 2;
+    CHAT_PARTICIPANT_ROLE_OWNER = 3;
+}
+
+message ChatParticipant {
+    string user_id = 1;
+    ChatParticipantRole role = 2;
+}
+
+service ChatsService {
+    rpc CreateChat(CreateChatRequest) returns (ChatResponse);
+    rpc GetChat(GetChatRequest) returns (GetChatResponse);
+    rpc UpdateChat(UpdateChatRequest) returns (ChatResponse);
+    rpc DeleteChat(DeleteChatRequest) returns (ChatResponse);
+
+    rpc AddParticipant(AddParticipantRequest) returns (ParticipantResponse);
+    rpc RemoveParticipant(RemoveParticipantRequest) returns (ParticipantResponse);
+    rpc ListParticipants(ListParticipantsRequest) returns (ListParticipantsResponse);
+}
+
+message CreateChatRequest {
+    Chat chat = 1;
+}
+
+message UpdateChatRequest {
+    Chat chat = 1;
+}
+
+message DeleteChatRequest {
+    string chat_id = 1;
+}
+
+message GetChatRequest {
+    string chat_id = 1;
+}
+
+message GetChatResponse {
+    Chat chat = 1;
+}
+
+message ChatResponse {
+}
+
+message AddParticipantRequest {
+    string chat_id = 1;
+    ChatParticipant participant = 2;
+}
+
+message RemoveParticipantRequest {
+    string user_id = 1;
+    string chat_id = 2;
+}
+
+message ParticipantResponse {
+    bool ok = 1;
+}
+
+message ListParticipantsRequest {
+    string chat_id = 1;
+}
+
+message ListParticipantsResponse {
+    repeated string user_ids = 1;
+}
+

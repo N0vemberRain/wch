@@ -22,6 +22,7 @@ service UsersService {
 	rpc CreateUser(CreateUserRequest) returns (UserResponse);
 
 	rpc GetUserByID(GetUserByIDRequest) returns (GetUserResponse);
+	rpc GetUsersByIDs(GetUsersByIDsRequest) returns (ListUsersResponse);
 	rpc GetUserByEmail(GetUserByEmailRequest) returns (GetUserResponse);
 	
 	rpc SearchUsers(SearchUsersRequest) returns (SearchUsersResponse);
@@ -37,6 +38,10 @@ message CreateUserRequest {
 
 message GetUserByIDRequest {
 	string user_id = 1;
+}
+
+message GetUsersByIDsRequest {
+	repeated string id = 1;
 }
 
 message GetUserByEmailRequest {
