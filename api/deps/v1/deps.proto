@@ -1,5 +1,7 @@
 syntax = "proto3";
-option go_package = "/gen";
+
+package deps.v1;
+option go_package = "/gen/deps;depspb";
 
 message Department {
     int32 id = 1;

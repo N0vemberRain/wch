@@ -1,5 +1,7 @@
 syntax = "proto3";
-option go_package = "/gen";
+
+package users.v1;
+option go_package = "/gen/users;userspb";
 
 import "google/protobuf/timestamp.proto";
 

@@ -4,17 +4,17 @@ import (
 	"context"
 	"time"
 
-	"wch/gen"
 	"wch/services/chats"
 	"wch/services/chats/internal/repository"
 	"wch/services/chats/pkg/model"
+
+	users "wch/services/users/pkg/model"
 
 	"github.com/google/uuid"
 )
 
 type Controller struct {
-	repo        repository.Repository
-	usersClient gen.UsersServiceClient
+	repo repository.Repository
 }
 
 func (c *Controller) CreateChat(ctx context.Context, chat *model.Chat) error {
@@ -71,7 +71,7 @@ func (c *Controller) RemoveParticipant(ctx context.Context, chatID, userID uuid.
 	return c.repo.RemoveParticipant(ctx, chatID, userID)
 }
 
-func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]*gen.User, error) {
+func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]*users.User, error) {
 	if chatID == uuid.Nil {
 		return nil, chats.ErrChatIDNil
 	}

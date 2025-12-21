@@ -1,7 +1,7 @@
 package model
 
 import (
-	"wch/gen"
+	chatspb "wch/gen/chats"
 	"wch/services/chats"
 
 	"github.com/google/uuid"
@@ -32,8 +32,8 @@ func ChatTypeFromString(t string) (ChatType, error) {
 	}
 }
 
-func ChatToProto(c *Chat) *gen.Chat {
-	return &gen.Chat{
+func ChatToProto(c *Chat) *chatspb.Chat {
+	return &chatspb.Chat{
 		Id:        c.ID.String(),
 		Type:      ChatTypeToString(c.Type),
 		Name:      c.Name,
@@ -42,7 +42,7 @@ func ChatToProto(c *Chat) *gen.Chat {
 	}
 }
 
-func ChatFromProto(c *gen.Chat) (*Chat, error) {
+func ChatFromProto(c *chatspb.Chat) (*Chat, error) {
 	t, err := ChatTypeFromString(c.Type)
 	if err != nil {
 		return nil, err
