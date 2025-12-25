@@ -4,17 +4,16 @@ import (
 	"context"
 	"time"
 
-	"wch/services/chats"
-	"wch/services/chats/internal/repository"
-	"wch/services/chats/pkg/model"
-
-	users "wch/services/users/pkg/model"
+	chats "wch/services/chats/internal/domain"
+	"wch/services/chats/internal/domain/model"
+	"wch/services/chats/internal/domain/ports"
 
 	"github.com/google/uuid"
 )
 
 type Controller struct {
-	repo repository.Repository
+	repo  ports.Repository
+	users ports.UserProvider
 }
 
 func (c *Controller) CreateChat(ctx context.Context, chat *model.Chat) error {
@@ -71,7 +70,7 @@ func (c *Controller) RemoveParticipant(ctx context.Context, chatID, userID uuid.
 	return c.repo.RemoveParticipant(ctx, chatID, userID)
 }
 
-func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]*users.User, error) {
+func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]model.User, error) {
 	if chatID == uuid.Nil {
 		return nil, chats.ErrChatIDNil
 	}
@@ -81,17 +80,10 @@ func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]
 		return nil, err
 	}
 
-	ids_str := make([]string, len(ids))
-	for _, id := range ids {
-		ids_str = append(ids_str, id.String())
-	}
-	resp, err := c.usersClient.GetUsersByIDs(ctx, &gen.GetUsersByIDsRequest{
-		Id: ids_str,
-	})
-
+	users, err := c.users.GetUsersByIDs(ctx, ids)
 	if err != nil {
 		return nil, err
 	}
 
-	return resp.Users, nil
+	return users, nil
 }

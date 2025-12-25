@@ -4,26 +4,28 @@ import (
 	"context"
 	"time"
 
-	"wch/gen"
-	"wch/services/chats"
+	chatspb "wch/gen/chats"
 	"wch/services/chats/internal/controller"
-	"wch/services/chats/pkg/model"
+	chats "wch/services/chats/internal/domain"
+	"wch/services/chats/internal/domain/model"
 
 	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
 
+var ErrRequestIsEmpty = status.Error(codes.InvalidArgument, "request is empty")
+
 type Handler struct {
 	ctrl *controller.Controller
 }
 
-func (h *Handler) CreateChat(ctx context.Context, req *gen.CreateChatRequest) (
-	*gen.ChatResponse,
+func (h *Handler) CreateChat(ctx context.Context, req *chatspb.CreateChatRequest) (
+	*chatspb.ChatResponse,
 	error,
 ) {
 	if req == nil {
-		return nil, status.Error(codes.InvalidArgument, chats.ErrRequestIsEmpty.Error())
+		return nil, ErrRequestIsEmpty
 	}
 
 	t, err := model.ChatTypeFromString(req.Chat.Type)
@@ -40,15 +42,15 @@ func (h *Handler) CreateChat(ctx context.Context, req *gen.CreateChatRequest) (
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &gen.ChatResponse{}, nil
+	return &chatspb.ChatResponse{}, nil
 }
 
-func (h *Handler) GetChat(ctx context.Context, req *gen.GetChatRequest) (
-	*gen.GetChatResponse,
+func (h *Handler) GetChat(ctx context.Context, req *chatspb.GetChatRequest) (
+	*chatspb.GetChatResponse,
 	error,
 ) {
 	if req == nil {
-		return nil, chats.ErrRequestIsEmpty
+		return nil, ErrRequestIsEmpty
 	}
 
 	id, err := uuid.Parse(req.ChatId)
@@ -60,17 +62,17 @@ func (h *Handler) GetChat(ctx context.Context, req *gen.GetChatRequest) (
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return &gen.GetChatResponse{
+	return &chatspb.GetChatResponse{
 		Chat: model.ChatToProto(chat),
 	}, nil
 }
 
-func (h *Handler) UpdateChat(ctx context.Context, req *gen.UpdateChatRequest) (
-	*gen.ChatResponse,
+func (h *Handler) UpdateChat(ctx context.Context, req *chatspb.UpdateChatRequest) (
+	*chatspb.ChatResponse,
 	error,
 ) {
 	if req == nil {
-		return nil, chats.ErrRequestIsEmpty
+		return nil, ErrRequestIsEmpty
 	}
 
 	chat, err := model.ChatFromProto(req.Chat)
@@ -82,15 +84,15 @@ func (h *Handler) UpdateChat(ctx context.Context, req *gen.UpdateChatRequest) (
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return &gen.ChatResponse{}, nil
+	return &chatspb.ChatResponse{}, nil
 }
 
-func (h *Handler) DeleteChat(ctx context.Context, req *gen.DeleteChatRequest) (
-	*gen.ChatResponse,
+func (h *Handler) DeleteChat(ctx context.Context, req *chatspb.DeleteChatRequest) (
+	*chatspb.ChatResponse,
 	error,
 ) {
 	if req == nil {
-		return nil, chats.ErrRequestIsEmpty
+		return nil, ErrRequestIsEmpty
 	}
 
 	id, err := uuid.Parse(req.ChatId)
@@ -102,15 +104,15 @@ func (h *Handler) DeleteChat(ctx context.Context, req *gen.DeleteChatRequest) (
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return &gen.ChatResponse{}, nil
+	return &chatspb.ChatResponse{}, nil
 }
 
-func (h *Handler) AddParticipant(ctx context.Context, req *gen.AddParticipantRequest) (
-	*gen.ParticipantResponse,
+func (h *Handler) AddParticipant(ctx context.Context, req *chatspb.AddParticipantRequest) (
+	*chatspb.ParticipantResponse,
 	error,
 ) {
 	if req == nil {
-		return nil, chats.ErrRequestIsEmpty
+		return nil, ErrRequestIsEmpty
 	}
 
 	if req.ChatId == "" {
@@ -140,15 +142,15 @@ func (h *Handler) AddParticipant(ctx context.Context, req *gen.AddParticipantReq
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
 
-	return &gen.ParticipantResponse{Ok: true}, nil
+	return &chatspb.ParticipantResponse{Ok: true}, nil
 }
 
-func (h *Handler) RemoveParticipant(ctx context.Context, req *gen.RemoveParticipantRequest) (
-	*gen.ParticipantResponse,
+func (h *Handler) RemoveParticipant(ctx context.Context, req *chatspb.RemoveParticipantRequest) (
+	*chatspb.ParticipantResponse,
 	error,
 ) {
 	if req == nil {
-		return nil, chats.ErrRequestIsEmpty
+		return nil, ErrRequestIsEmpty
 	}
 
 	chatId, err := uuid.Parse(req.ChatId)
@@ -166,15 +168,15 @@ func (h *Handler) RemoveParticipant(ctx context.Context, req *gen.RemoveParticip
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &gen.ParticipantResponse{Ok: true}, nil
+	return &chatspb.ParticipantResponse{Ok: true}, nil
 }
 
-func (h *Handler) ListParticipants(ctx context.Context, req *gen.ListParticipantsRequest) (
-	*gen.ListParticipantsResponse,
+func (h *Handler) ListParticipants(ctx context.Context, req *chatspb.ListParticipantsRequest) (
+	*chatspb.ListParticipantsResponse,
 	error,
 ) {
 	if req == nil {
-		return nil, chats.ErrRequestIsEmpty
+		return nil, ErrRequestIsEmpty
 	}
 
 	chatId, err := uuid.Parse(req.ChatId)
@@ -184,9 +186,11 @@ func (h *Handler) ListParticipants(ctx context.Context, req *gen.ListParticipant
 
 	participants, err := h.ctrl.ListParticipants(ctx, chatId)
 
-	resp := &gen.ListParticipantsResponse{}
+	resp := &chatspb.ListParticipantsResponse{}
 
 	for _, p := range participants {
-		resp = append(resp, p)
+		resp.Users = append(resp.Users, p)
 	}
+
+	return resp, nil
 }

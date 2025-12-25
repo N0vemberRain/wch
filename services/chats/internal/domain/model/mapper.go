@@ -2,7 +2,7 @@ package model
 
 import (
 	chatspb "wch/gen/chats"
-	"wch/services/chats"
+	chats "wch/services/chats/internal/domain"
 
 	"github.com/google/uuid"
 	timeconv "google.golang.org/protobuf/types/known/timestamppb"
@@ -58,4 +58,13 @@ func ChatFromProto(c *chatspb.Chat) (*Chat, error) {
 		CreatedAt: c.CreatedAt.AsTime(),
 		UpdatedAt: c.UpdatedAt.AsTime(),
 	}, nil
+}
+
+func IDsToString(ids []uuid.UUID) []string {
+	ids_str := make([]string, len(ids))
+	for _, id := range ids {
+		ids_str = append(ids_str, id.String())
+	}
+
+	return ids_str
 }

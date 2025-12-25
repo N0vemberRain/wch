@@ -4,7 +4,6 @@ import "errors"
 
 var (
 	ErrChatType        = errors.New("chat type is invalid")
-	ErrRequestIsEmpty  = errors.New("request is empty")
 	ErrChatNameIsEmpty = errors.New("chat name is empty")
 )
 

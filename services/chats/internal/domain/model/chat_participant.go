@@ -2,7 +2,8 @@ package model
 
 import (
 	"time"
-	"wch/services/chats"
+
+	chats "wch/services/chats/internal/domain"
 
 	"github.com/google/uuid"
 )
