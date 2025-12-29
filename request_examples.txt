@@ -5,3 +5,15 @@ grpcurl -plaintext -d '{\"username\": \"Alice\", \"email\":\"alice@yandex.ru\"}'
 grpcurl -plaintext -d '{\"username\": \"Alice\", \"email\":\"alice@yandex.ru\"}' localhost:8082 UsersService.SearchUsers
 
 grpcurl -plaintext -d '{\"username\": \"Igor\"}' localhost:8082 UsersService.SearchUsers
+
+grpcurl -plaintext -d '{\"name\": \"Common Chat\"}' localhost:8082 chats.v1.ChatsService.GetChatByName
+
+grpcurl -plaintext -d '{
+\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\",
+\"participant\":\"{
+	\"user_id\":\"66e6350b-31c2-4a77-a73a-133cbf18f116\",
+	\"role\":\"1\"
+}\"
+}' localhost:8082 chats.v1.ChatsService.AddParticipant
+
+grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"participant\":{\"user_id\":\"66e6350b-31c2-4a77-a73a-133cbf18f116\",\"role\":\"CHAT_PARTICIPANT_ROLE_MEMBER\"}}' localhost:8082 chats.v1.ChatsService.AddParticipant

@@ -1,7 +1,7 @@
 package model
 
 import (
-	chatspb "wch/gen/chats"
+	chatspb "wch/gen/chats/v1"
 	chats "wch/services/chats/internal/domain"
 
 	"github.com/google/uuid"
@@ -67,4 +67,39 @@ func IDsToString(ids []uuid.UUID) []string {
 	}
 
 	return ids_str
+}
+
+func UserToProto(u *User) *chatspb.ChatUser {
+	return &chatspb.ChatUser{
+		Id:          u.ID.String(),
+		DisplayName: u.Username,
+		AvatarUrl:   u.AvatarURL,
+	}
+}
+
+func ChatParticipantRoleToString(role ChatParticipantRole) string {
+	switch role {
+	case ChatParticipantAdmin:
+		return "Admin"
+	case ChatParticipantMember:
+		return "Member"
+	case ChatParticipantOwner:
+		return "Admin"
+
+	default:
+		return "Unknown"
+	}
+}
+
+func ChatParticipantRoleFromString(role string) ChatParticipantRole {
+	switch role {
+	case "Admin":
+		return ChatParticipantAdmin
+	case "Member":
+		return ChatParticipantMember
+	case "Owner":
+		return ChatParticipantOwner
+	default:
+		return ChatParticipantUnknown
+	}
 }

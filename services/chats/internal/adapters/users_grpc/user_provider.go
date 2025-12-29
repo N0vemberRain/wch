@@ -3,7 +3,7 @@ package usersgrpc
 import (
 	"context"
 
-	userspb "wch/gen/users"
+	userspb "wch/gen/users/v1"
 	"wch/services/chats/internal/domain/model"
 
 	"github.com/google/uuid"

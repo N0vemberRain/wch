@@ -4,7 +4,7 @@ import (
 	"context"
 	"time"
 
-	chatspb "wch/gen/chats"
+	chatspb "wch/gen/chats/v1"
 	"wch/services/chats/internal/controller"
 	chats "wch/services/chats/internal/domain"
 	"wch/services/chats/internal/domain/model"
@@ -18,6 +18,13 @@ var ErrRequestIsEmpty = status.Error(codes.InvalidArgument, "request is empty")
 
 type Handler struct {
 	ctrl *controller.Controller
+	chatspb.ChatsServiceServer
+}
+
+func NewHandler(ctrl *controller.Controller) *Handler {
+	return &Handler{
+		ctrl: ctrl,
+	}
 }
 
 func (h *Handler) CreateChat(ctx context.Context, req *chatspb.CreateChatRequest) (
@@ -45,7 +52,7 @@ func (h *Handler) CreateChat(ctx context.Context, req *chatspb.CreateChatRequest
 	return &chatspb.ChatResponse{}, nil
 }
 
-func (h *Handler) GetChat(ctx context.Context, req *chatspb.GetChatRequest) (
+func (h *Handler) GetChatByID(ctx context.Context, req *chatspb.GetChatByIDRequest) (
 	*chatspb.GetChatResponse,
 	error,
 ) {
@@ -57,7 +64,28 @@ func (h *Handler) GetChat(ctx context.Context, req *chatspb.GetChatRequest) (
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	chat, err := h.ctrl.GetChat(ctx, id)
+	chat, err := h.ctrl.GetChatByID(ctx, id)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	return &chatspb.GetChatResponse{
+		Chat: model.ChatToProto(chat),
+	}, nil
+}
+
+func (h *Handler) GetChatByName(ctx context.Context, req *chatspb.GetChatByNameRequest) (
+	*chatspb.GetChatResponse,
+	error,
+) {
+	if req == nil {
+		return nil, ErrRequestIsEmpty
+	}
+
+	if req.Name == "" {
+		return nil, chats.ErrChatNameIsEmpty
+	}
+	chat, err := h.ctrl.GetChatByName(ctx, req.Name)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -137,7 +165,7 @@ func (h *Handler) AddParticipant(ctx context.Context, req *chatspb.AddParticipan
 		model.ChatParticipantRole(req.Participant.Role),
 		time.Now(),
 	)
-	err = h.ctrl.AddParticipant(ctx, participant)
+	err = h.ctrl.AddParticipant(ctx, chat_id, participant)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -189,7 +217,7 @@ func (h *Handler) ListParticipants(ctx context.Context, req *chatspb.ListPartici
 	resp := &chatspb.ListParticipantsResponse{}
 
 	for _, p := range participants {
-		resp.Users = append(resp.Users, p)
+		resp.Users = append(resp.Users, model.UserToProto(&p))
 	}
 
 	return resp, nil

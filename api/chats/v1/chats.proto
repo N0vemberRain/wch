@@ -1,10 +1,10 @@
 syntax = "proto3";
 
 package chats.v1;
-option go_package = "/gen/chats;chatspb";
+option go_package = "wch/gen/chats/v1;chatspb";
 
 import "google/protobuf/timestamp.proto";
-import "users/v1/users.proto";
+//import "users/v1/users.proto";
 
 message Chat {
     string id = 1;
@@ -13,6 +13,12 @@ message Chat {
 
     google.protobuf.Timestamp created_at = 4;
 	google.protobuf.Timestamp updated_at = 5; 
+}
+
+message ChatUser {
+    string id = 1;
+    string display_name = 2;
+    string avatar_url = 3;
 }
 
 enum ChatParticipantRole {
@@ -29,7 +35,8 @@ message ChatParticipant {
 
 service ChatsService {
     rpc CreateChat(CreateChatRequest) returns (ChatResponse);
-    rpc GetChat(GetChatRequest) returns (GetChatResponse);
+    rpc GetChatByID(GetChatByIDRequest) returns (GetChatResponse);
+    rpc GetChatByName(GetChatByNameRequest) returns (GetChatResponse);
     rpc UpdateChat(UpdateChatRequest) returns (ChatResponse);
     rpc DeleteChat(DeleteChatRequest) returns (ChatResponse);
 
@@ -50,8 +57,12 @@ message DeleteChatRequest {
     string chat_id = 1;
 }
 
-message GetChatRequest {
+message GetChatByIDRequest {
     string chat_id = 1;
+}
+
+message GetChatByNameRequest {
+    string name = 1;
 }
 
 message GetChatResponse {
@@ -80,6 +91,6 @@ message ListParticipantsRequest {
 }
 
 message ListParticipantsResponse {
-    repeated users.v1.User users = 1;
+    repeated ChatUser users = 1;
 }
 
