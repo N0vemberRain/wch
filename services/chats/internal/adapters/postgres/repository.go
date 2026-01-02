@@ -129,7 +129,7 @@ func (r *ChatRepositoryPg) GetParticipantsIDs(
 	ctx context.Context, chatID uuid.UUID,
 ) ([]uuid.UUID, error) {
 	rows, err := r.db.Query(
-		`SELECT user_id FROM chats WHERE chat_id=$1;`,
+		`SELECT user_id FROM chat_participants WHERE chat_id=$1;`,
 		chatID.String(),
 	)
 	if err != nil {

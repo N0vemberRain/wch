@@ -16,9 +16,10 @@ type Controller struct {
 	users ports.UserProvider
 }
 
-func NewChatController(repo ports.Repository) *Controller {
+func NewChatController(repo ports.Repository, users ports.UserProvider) *Controller {
 	return &Controller{
-		repo: repo,
+		repo:  repo,
+		users: users,
 	}
 }
 

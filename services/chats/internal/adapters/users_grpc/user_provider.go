@@ -2,6 +2,7 @@ package usersgrpc
 
 import (
 	"context"
+	"fmt"
 
 	userspb "wch/gen/users/v1"
 	"wch/services/chats/internal/domain/model"
@@ -13,7 +14,14 @@ type UserProviderGRPC struct {
 	client userspb.UsersServiceClient
 }
 
+func NewUserProvider(client userspb.UsersServiceClient) *UserProviderGRPC {
+	return &UserProviderGRPC{
+		client: client,
+	}
+}
+
 func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) ([]model.User, error) {
+	fmt.Println("Hello from UserProvider!!!!!!!!!!!!!!!!!!!!!!")
 	req := &userspb.GetUsersByIDsRequest{
 		Id: model.IDsToString(ids),
 	}

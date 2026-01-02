@@ -213,6 +213,9 @@ func (h *Handler) ListParticipants(ctx context.Context, req *chatspb.ListPartici
 	}
 
 	participants, err := h.ctrl.ListParticipants(ctx, chatId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
 
 	resp := &chatspb.ListParticipantsResponse{}
 
