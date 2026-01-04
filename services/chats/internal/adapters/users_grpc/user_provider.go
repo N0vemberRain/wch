@@ -2,7 +2,6 @@ package usersgrpc
 
 import (
 	"context"
-	"fmt"
 
 	userspb "wch/gen/users/v1"
 	"wch/services/chats/internal/domain/model"
@@ -21,7 +20,6 @@ func NewUserProvider(client userspb.UsersServiceClient) *UserProviderGRPC {
 }
 
 func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) ([]model.User, error) {
-	fmt.Println("Hello from UserProvider!!!!!!!!!!!!!!!!!!!!!!")
 	req := &userspb.GetUsersByIDsRequest{
 		Id: model.IDsToString(ids),
 	}
@@ -31,7 +29,7 @@ func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) 
 		return nil, err
 	}
 
-	users := make([]model.User, len(resp.Users))
+	users := make([]model.User, 0)
 	for _, u := range resp.Users {
 		u := model.User{
 			ID:        uuid.MustParse(u.Id),

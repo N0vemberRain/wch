@@ -1,4 +1,4 @@
-package users
+package model
 
 type SearchFilter struct {
 	Username     string `db:"username" json:"username"`

@@ -3,14 +3,14 @@ package grpc
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
-	"wch/gen"
-
+	userspb "wch/gen/users/v1"
 	//"wch/services/users/internal/controller"
-	users "wch/services/users/internal"
 	"wch/services/users/internal/controller"
-	"wch/services/users/pkg/model"
+	domain "wch/services/users/internal/domain"
+	"wch/services/users/internal/domain/model"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -18,7 +18,7 @@ import (
 
 // Handler defines a controller gRPC handler.
 type Handler struct {
-	gen.UnimplementedUsersServiceServer
+	userspb.UnimplementedUsersServiceServer
 	usr_ctrl *controller.UserController
 }
 
@@ -27,7 +27,7 @@ func New(uc *controller.UserController) *Handler {
 	return &Handler{usr_ctrl: uc}
 }
 
-func (h *Handler) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*gen.UserResponse, error) {
+func (h *Handler) CreateUser(ctx context.Context, req *userspb.CreateUserRequest) (*userspb.UserResponse, error) {
 	if req == nil {
 		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
 	} else if req.User.Username == "" {
@@ -50,43 +50,70 @@ func (h *Handler) CreateUser(ctx context.Context, req *gen.CreateUserRequest) (*
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	return &gen.UserResponse{}, nil
+	return &userspb.UserResponse{}, nil
 }
 
 // GetUserByID returns user details by id.
-func (h *Handler) GetUserByID(ctx context.Context, req *gen.GetUserByIDRequest) (*gen.GetUserResponse, error) {
+func (h *Handler) GetUserByID(ctx context.Context, req *userspb.GetUserByIDRequest) (*userspb.GetUserResponse, error) {
 	if req == nil || req.UserId == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
 	}
 	u, err := h.usr_ctrl.GetByID(ctx, req.UserId)
-	if err != nil && errors.Is(err, users.ErrNotFound) {
+	if err != nil && errors.Is(err, domain.ErrNotFound) {
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	return &gen.GetUserResponse{
+	return &userspb.GetUserResponse{
 		User: model.UserToProto(u),
 	}, nil
 }
 
+func (h *Handler) GetUsersByIDs(ctx context.Context, req *userspb.GetUsersByIDsRequest) (
+	*userspb.ListUsersResponse, error,
+) {
+	if len(req.Id) == 0 {
+		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
+	}
+
+	fmt.Println(len(req.Id))
+	for _, id := range req.Id {
+		fmt.Println(id)
+	}
+
+	users, err := h.usr_ctrl.GetByIDs(ctx, req.Id)
+	if err != nil && errors.Is(err, domain.ErrNotFound) {
+		return nil, status.Errorf(codes.NotFound, err.Error())
+	} else if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	resp := &userspb.ListUsersResponse{}
+	for _, u := range users {
+		resp.Users = append(resp.Users, model.UserToProto(&u))
+	}
+
+	return resp, nil
+}
+
 // GetUserByEmail returns user details by id.
-func (h *Handler) GetUserByEmail(ctx context.Context, req *gen.GetUserByEmailRequest) (*gen.GetUserResponse, error) {
+func (h *Handler) GetUserByEmail(ctx context.Context, req *userspb.GetUserByEmailRequest) (*userspb.GetUserResponse, error) {
 	if req == nil || req.Email == "" {
 		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty email")
 	}
 	u, err := h.usr_ctrl.GetByEmail(ctx, req.Email)
-	if err != nil && errors.Is(err, users.ErrNotFound) {
+	if err != nil && errors.Is(err, domain.ErrNotFound) {
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	} else if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
-	return &gen.GetUserResponse{
+	return &userspb.GetUserResponse{
 		User: model.UserToProto(u),
 	}, nil
 }
 
-func (h *Handler) SearchUsers(ctx context.Context, req *gen.SearchUsersRequest) (*gen.SearchUsersResponse, error) {
-	filter := users.SearchFilter{
+func (h *Handler) SearchUsers(ctx context.Context, req *userspb.SearchUsersRequest) (*userspb.SearchUsersResponse, error) {
+	filter := model.SearchFilter{
 		Email:        req.Email,
 		Username:     req.Username,
 		FirstName:    req.FirstName,
@@ -100,7 +127,7 @@ func (h *Handler) SearchUsers(ctx context.Context, req *gen.SearchUsersRequest) 
 		return nil, status.Errorf(codes.NotFound, err.Error())
 	}
 
-	resp := &gen.SearchUsersResponse{}
+	resp := &userspb.SearchUsersResponse{}
 	for _, u := range usersList {
 		resp.Users = append(resp.Users, model.UserToProto(u))
 	}
@@ -108,7 +135,7 @@ func (h *Handler) SearchUsers(ctx context.Context, req *gen.SearchUsersRequest) 
 	return resp, nil
 }
 
-func (h *Handler) ListUsers(ctx context.Context, req *gen.ListUsersRequest) (*gen.ListUsersResponse, error) {
+func (h *Handler) ListUsers(ctx context.Context, req *userspb.ListUsersRequest) (*userspb.ListUsersResponse, error) {
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, "request is empty")
 	}
@@ -118,7 +145,7 @@ func (h *Handler) ListUsers(ctx context.Context, req *gen.ListUsersRequest) (*ge
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
 
-	resp := &gen.ListUsersResponse{}
+	resp := &userspb.ListUsersResponse{}
 	for _, u := range users {
 		resp.Users = append(resp.Users, model.UserToProto(u))
 	}

@@ -1,6 +1,7 @@
 package model
 
 import (
+	"fmt"
 	chatspb "wch/gen/chats/v1"
 	chats "wch/services/chats/internal/domain"
 
@@ -61,8 +62,9 @@ func ChatFromProto(c *chatspb.Chat) (*Chat, error) {
 }
 
 func IDsToString(ids []uuid.UUID) []string {
-	ids_str := make([]string, len(ids))
+	ids_str := make([]string, 0)
 	for _, id := range ids {
+		fmt.Println(id.String())
 		ids_str = append(ids_str, id.String())
 	}
 

@@ -2,15 +2,14 @@ package repository
 
 import (
 	"context"
+	"errors"
 	"strconv"
-	users "wch/services/users/internal"
-	"wch/services/users/pkg/model"
-	usr "wch/services/users/pkg/model"
+	"wch/services/users/internal/domain/model"
 
 	"database/sql"
 
 	"github.com/google/uuid"
-	_ "github.com/lib/pq"
+	pg "github.com/lib/pq"
 )
 
 type UserRepositoryPg struct {
@@ -21,7 +20,7 @@ func NewUserRepositoryPg(db *sql.DB) *UserRepositoryPg {
 	return &UserRepositoryPg{db}
 }
 
-func (r *UserRepositoryPg) CreateUser(ctx context.Context, u *usr.User) error {
+func (r *UserRepositoryPg) CreateUser(ctx context.Context, u *model.User) error {
 	var id uuid.UUID
 	if err := r.db.QueryRow(
 		`INSERT INTO users (id, username, email, password_hash, 
@@ -47,8 +46,8 @@ func (r *UserRepositoryPg) CreateUser(ctx context.Context, u *usr.User) error {
 	return nil
 }
 
-func (r *UserRepositoryPg) GetUserByID(ctx context.Context, id string) (*usr.User, error) {
-	u := &usr.User{}
+func (r *UserRepositoryPg) GetUserByID(ctx context.Context, id string) (*model.User, error) {
+	u := &model.User{}
 	if err := r.db.QueryRow(
 		`SELECT id, username, email, password_hash, 
 		first_name, last_name, surname, avatar_url, 
@@ -62,8 +61,36 @@ func (r *UserRepositoryPg) GetUserByID(ctx context.Context, id string) (*usr.Use
 	return u, nil
 }
 
-func (r *UserRepositoryPg) GetUserByEmail(ctx context.Context, email string) (*usr.User, error) {
-	u := &usr.User{}
+func (r *UserRepositoryPg) GetUsersByIDs(ctx context.Context, ids []string) ([]model.User, error) {
+	if len(ids) == 0 {
+		return nil, errors.New("IDs are empty")
+	}
+
+	query := "SELECT id, username FROM users WHERE id = ANY($1);"
+	rows, err := r.db.Query(query, pg.Array(ids))
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+
+	users := make([]model.User, 0)
+	for rows.Next() {
+		u := model.User{}
+		err = rows.Scan(
+			&u.ID,
+			&u.Username,
+		)
+		if err != nil {
+			return nil, err
+		}
+		users = append(users, u)
+	}
+
+	return users, nil
+}
+
+func (r *UserRepositoryPg) GetUserByEmail(ctx context.Context, email string) (*model.User, error) {
+	u := &model.User{}
 	if err := r.db.QueryRow(
 		`SELECT id, username, email, password_hash, 
 		first_name, last_name, surname, avatar_url, 
@@ -87,11 +114,11 @@ func (r *UserRepositoryPg) GetUserByEmail(ctx context.Context, email string) (*u
 	return u, nil
 }
 
-func (r *UserRepositoryPg) GetUserByName(ctx context.Context, username string) (*usr.User, error) {
+func (r *UserRepositoryPg) GetUserByName(ctx context.Context, username string) (*model.User, error) {
 	return nil, nil
 }
 
-func (r *UserRepositoryPg) UpdateUser(ctx context.Context, u *usr.User) error {
+func (r *UserRepositoryPg) UpdateUser(ctx context.Context, u *model.User) error {
 	return nil
 }
 
@@ -99,7 +126,7 @@ func (r *UserRepositoryPg) DeleteUser(ctx context.Context, id string) error {
 	return nil
 }
 
-func (r *UserRepositoryPg) SearchUsers(ctx context.Context, filter users.SearchFilter) (
+func (r *UserRepositoryPg) SearchUsers(ctx context.Context, filter model.SearchFilter) (
 	[]*model.User,
 	error,
 ) {

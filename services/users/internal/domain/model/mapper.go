@@ -1,13 +1,13 @@
 package model
 
 import (
-	"wch/gen"
+	userspb "wch/gen/users/v1"
 
 	timeconv "google.golang.org/protobuf/types/known/timestamppb"
 )
 
-func UserToProto(u *User) *gen.User {
-	return &gen.User{
+func UserToProto(u *User) *userspb.User {
+	return &userspb.User{
 		Id:           u.ID.String(),
 		Username:     u.Username,
 		Email:        u.Email,
@@ -23,7 +23,7 @@ func UserToProto(u *User) *gen.User {
 	}
 }
 
-func UserFromProto(u *gen.User) (*User, error) {
+func UserFromProto(u *userspb.User) (*User, error) {
 	return &User{
 		Username:     u.Username,
 		Email:        u.Email,

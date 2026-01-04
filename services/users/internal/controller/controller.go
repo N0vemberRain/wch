@@ -4,9 +4,9 @@ import (
 	"context"
 	"errors"
 
-	users "wch/services/users/internal"
-	"wch/services/users/internal/repository"
-	"wch/services/users/pkg/model"
+	"wch/services/users/internal/domain"
+	"wch/services/users/internal/domain/model"
+	repository "wch/services/users/internal/domain/ports"
 
 	"github.com/google/uuid"
 )
@@ -23,7 +23,7 @@ func NewUserController(repo repository.UserRepository) *UserController {
 func (c *UserController) CreateUser(ctx context.Context, u *model.User) error {
 	user, _ := c.repo.GetUserByEmail(ctx, u.Email)
 	if user != nil {
-		return users.ErrEmailExists
+		return domain.ErrEmailExists
 	}
 
 	u.ID = uuid.New()
@@ -38,19 +38,23 @@ func (c *UserController) CreateUser(ctx context.Context, u *model.User) error {
 func (c *UserController) GetByID(ctx context.Context, id string) (*model.User, error) {
 	userdata, err := c.repo.GetUserByID(ctx, id)
 	if err != nil && errors.Is(err, errors.New("user not found")) {
-		return nil, users.ErrNotFound
+		return nil, domain.ErrNotFound
 	} else if err != nil {
 		return nil, err
 	}
 
 	return userdata, nil
+}
+
+func (c *UserController) GetByIDs(ctx context.Context, ids []string) ([]model.User, error) {
+	return c.repo.GetUsersByIDs(ctx, ids)
 }
 
 // GetByEmail returns the user's details
 func (c *UserController) GetByEmail(ctx context.Context, email string) (*model.User, error) {
 	userdata, err := c.repo.GetUserByEmail(ctx, email)
 	if err != nil && errors.Is(err, errors.New("user not found")) {
-		return nil, users.ErrNotFound
+		return nil, domain.ErrNotFound
 	} else if err != nil {
 		return nil, err
 	}
@@ -58,7 +62,7 @@ func (c *UserController) GetByEmail(ctx context.Context, email string) (*model.U
 	return userdata, nil
 }
 
-func (c *UserController) SearchUsers(ctx context.Context, filter users.SearchFilter) (
+func (c *UserController) SearchUsers(ctx context.Context, filter model.SearchFilter) (
 	[]*model.User, error,
 ) {
 	return c.repo.SearchUsers(ctx, filter)

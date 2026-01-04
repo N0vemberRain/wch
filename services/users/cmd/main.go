@@ -1,27 +1,22 @@
 package main
 
 import (
-	"context"
 	"flag"
-	"fmt"
 	"log"
 
 	//"net/http"
 	"net"
-	"time"
 
-	"wch/pkg/discovery"
-	discmemory "wch/pkg/discovery/memory"
 	"wch/services/users/internal/controller"
-	"wch/services/users/internal/repository"
 
 	//mdgateway "wch/users/internal/gateway/metadata/http"
 	//httphandler "wch/users/internal/handler/http"
 
-	"wch/gen"
+	userspb "wch/gen/users/v1"
 	//"wch/pkg/discovery/memory"
 
-	grpchandler "wch/services/users/internal/handler/grpc"
+	grpchandler "wch/services/users/internal/adapters/grpc"
+	pg "wch/services/users/internal/adapters/postgres"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/reflection"
@@ -36,39 +31,39 @@ func main() {
 
 	log.Println("Starting the rating service on port %d", port)
 	//registry := discmemory.NewRegistry("localhost:8500")
-	registry := discmemory.NewRegistry()
+	//registry := discmemory.NewRegistry()
 	//if err := nil {
 	//panic(err)
 	//}
-	ctx := context.Background()
-	instanceID := discovery.GenerateInstanceID(serviceName)
+	// ctx := context.Background()
+	// instanceID := discovery.GenerateInstanceID(serviceName)
 
-	if err := registry.Register(
-		ctx, instanceID,
-		serviceName,
-		fmt.Sprintf("localhost:%d", port),
-	); err != nil {
-		panic(err)
-	}
+	// if err := registry.Register(
+	// 	ctx, instanceID,
+	// 	serviceName,
+	// 	fmt.Sprintf("localhost:%d", port),
+	// ); err != nil {
+	// 	panic(err)
+	// }
 
-	go func() {
-		for {
-			err := registry.ReportHealthState(instanceID, serviceName)
-			if err != nil {
-				log.Println("Failed to report healthy state: " + err.Error())
-			}
-			time.Sleep(1 * time.Second)
-		}
-	}()
+	// go func() {
+	// 	for {
+	// 		err := registry.ReportHealthState(instanceID, serviceName)
+	// 		if err != nil {
+	// 			log.Println("Failed to report healthy state: " + err.Error())
+	// 		}
+	// 		time.Sleep(1 * time.Second)
+	// 	}
+	// }()
 
-	defer registry.Deregister(ctx, instanceID, serviceName)
+	// defer registry.Deregister(ctx, instanceID, serviceName)
 
-	db, err := repository.NewPostgresDBFromEnv()
+	db, err := pg.NewPostgresDBFromEnv()
 	if err != nil {
 		log.Fatalf("Database settings: %s", err)
 	}
 
-	userRepo := repository.NewUserRepositoryPg(db)
+	userRepo := pg.NewUserRepositoryPg(db)
 	userCtrl := controller.NewUserController(userRepo)
 	h := grpchandler.New(userCtrl)
 	lis, err := net.Listen("tcp", "localhost:8082")
@@ -77,7 +72,7 @@ func main() {
 	}
 
 	srv := grpc.NewServer()
-	gen.RegisterUsersServiceServer(srv, h)
+	userspb.RegisterUsersServiceServer(srv, h)
 	reflection.Register(srv)
 	srv.Serve(lis)
 }
