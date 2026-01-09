@@ -1,0 +1,44 @@
+syntax = "proto3";
+
+package msgs.v1;
+option go_package = "wch/gen/msgs/v1;msgspb";
+
+import "google/protobuf/timestamp.proto";
+
+message Message {
+    string id = 1;
+    string chat_id = 2;
+    string sender_id = 3;
+    string content = 4;
+    google.protobuf.Timestamp created_at = 5;
+}
+
+service MessagesService {
+    // Send a message to a chat
+    rpc SendMessage(SendMessageRequest) returns (MessageResponse);
+    // Get messages from a chat
+    rpc ListMessages(ListMessagesRequest) returns (ListMessagesResponse);
+}
+
+message SendMessageRequest {
+    string chat_id = 1;
+    string sender_id = 2;
+    string content = 3;
+}
+
+message MessageResponse {
+    Message msg = 1;
+}
+
+message ListMessagesRequest {
+    string chat_id = 1;
+
+    // pagination
+    int32 limit = 2;
+    string cursor = 3;
+}
+
+message ListMessagesResponse {
+    repeated Message msgs = 1;
+    string next_cursor = 2;
+}
