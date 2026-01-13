@@ -9,5 +9,5 @@ import (
 
 type MessageRepository interface {
 	Save(context.Context, *model.Message) error
-	List(context.Context, uuid.UUID) ([]model.Message, error)
+	List(context.Context, uuid.UUID, int, *model.Cursor) ([]model.Message, error)
 }

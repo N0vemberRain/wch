@@ -17,3 +17,13 @@ grpcurl -plaintext -d '{
 }' localhost:8082 chats.v1.ChatsService.AddParticipant
 
 grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"participant\":{\"user_id\":\"66e6350b-31c2-4a77-a73a-133cbf18f116\",\"role\":\"CHAT_PARTICIPANT_ROLE_MEMBER\"}}' localhost:8082 chats.v1.ChatsService.AddParticipant
+
+alice
+grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"sender_id\":\"66e6350b-31c2-4a77-a73a-133cbf18f116\", \"content\":\"I dont see anyone!\"}' localhost:8086 msgs.v1.MessagesService.SendMessage
+
+igor
+grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"sender_id\":\"1683050d-eabd-49e1-9384-8cbdca1a975a\", \"content\":\"Im here, Alice:3\"}' localhost:8086 msgs.v1.MessagesService.SendMessage
+
+grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"limit\": 3}' localhost:8086 msgs.v1.MessagesService.ListMessages
+
+grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"limit\": 3, \"cursor\":\"2026-01-13T22:11:53.277682Z|77368942-2e0c-4289-a796-148634ad3255\"}' localhost:8086 msgs.v1.MessagesService.ListMessages

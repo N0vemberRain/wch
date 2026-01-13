@@ -81,7 +81,22 @@ func (h *Handler) ListMessages(ctx context.Context, req *msgspb.ListMessagesRequ
 		return nil, status.Error(codes.InvalidArgument, domain.ErrChatID.Error())
 	}
 
-	msgs, err := h.ctrl.List(ctx, chat_id)
+	if req.Limit == 0 {
+		return nil, status.Error(codes.InvalidArgument, "limit is undefined")
+	}
+
+	msgs := make([]model.Message, 0)
+	var nextCursor string
+	if req.Cursor == "" {
+		msgs, nextCursor, err = h.ctrl.List(ctx, chat_id, int(req.Limit), nil)
+	} else {
+		cursor, err := model.NewCursor(req.Cursor)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+		msgs, nextCursor, err = h.ctrl.List(ctx, chat_id, int(req.Limit), cursor)
+	}
+
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
@@ -90,6 +105,7 @@ func (h *Handler) ListMessages(ctx context.Context, req *msgspb.ListMessagesRequ
 	for _, msg := range msgs {
 		resp.Msgs = append(resp.Msgs, model.MessageToProto(&msg))
 	}
+	resp.NextCursor = nextCursor
 
 	return resp, nil
 }

@@ -34,13 +34,34 @@ func (r *Repository) Save(ctx context.Context, msg *model.Message) error {
 	return nil
 }
 
-func (r *Repository) List(ctx context.Context, chat_id uuid.UUID) ([]model.Message, error) {
-	query := "SELECT * FROM messages WHERE chat_id=$1"
-	rows, err := r.db.Query(query, chat_id.String())
+func (r *Repository) List(ctx context.Context, chat_id uuid.UUID, limit int, cursor *model.Cursor) ([]model.Message, error) {
+	var rows *sql.Rows
+	var err error
+	if cursor != nil {
+		query := `
+	SELECT * FROM messages WHERE chat_id=$1
+	 AND (
+	 	created_at < $2 OR (created_at = $2 AND id < $3)
+	) ORDER BY created_at DESC, id DESC LIMIT $4;
+	`
+		rows, err = r.db.Query(query, chat_id.String(), cursor.CreatedAt, cursor.ID, limit)
+		if err != nil {
+			return nil, err
+		}
+	} else {
+		query := `
+	SELECT * FROM messages WHERE chat_id=$1
+	 ORDER BY created_at DESC, id DESC LIMIT $2;
+	`
+		rows, err = r.db.Query(query, chat_id.String(), limit)
+		if err != nil {
+			return nil, err
+		}
+	}
 	if err != nil {
 		return nil, err
 	}
-	rows.Close()
+	defer rows.Close()
 
 	msgs := make([]model.Message, 0)
 	for rows.Next() {
