@@ -225,3 +225,37 @@ func (h *Handler) ListParticipants(ctx context.Context, req *chatspb.ListPartici
 
 	return resp, nil
 }
+
+func (h *Handler) CheckParticipant(ctx context.Context, req *chatspb.CheckParticipantRequest) (
+	*chatspb.CheckParticipantResponse,
+	error,
+) {
+	if req == nil {
+		return nil, ErrRequestIsEmpty
+	}
+
+	chatID, err := uuid.Parse(req.ChatId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	userID, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	participant, err := h.ctrl.GetParticipant(ctx, chatID, userID)
+	if err != nil && err == chats.ErrParticipateNotFound {
+		return &chatspb.CheckParticipantResponse{
+			IsParticipant: false,
+			Role:          model.ChatParticipantUnknown,
+		}, nil
+	} else if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &chatspb.CheckParticipantResponse{
+		IsParticipant: true,
+		Role:          chatspb.ChatParticipantRole(participant.Role),
+	}, nil
+}

@@ -1,6 +1,7 @@
 package model
 
 import (
+	chatspb "wch/gen/chats/v1"
 	msgspb "wch/gen/msgs/v1"
 	"wch/services/msgs/internal/domain"
 
@@ -38,4 +39,17 @@ func MessageFromProto(m *msgspb.Message) (*Message, error) {
 		Content:   m.Content,
 		CreatedAt: m.CreatedAt.AsTime(),
 	}, nil
+}
+
+func ChatParticipantRoleFromProto(r chatspb.ChatParticipantRole) ChatParticipantRole {
+	switch r {
+	case chatspb.ChatParticipantRole_CHAT_PARTICIPANT_ROLE_ADMIN:
+		return ChatParticipantAdmin
+	case chatspb.ChatParticipantRole_CHAT_PARTICIPANT_ROLE_MEMBER:
+		return ChatParticipantMember
+	case chatspb.ChatParticipantRole_CHAT_PARTICIPANT_ROLE_OWNER:
+		return ChatParticipantOwner
+	default:
+		return ChatParticipantUnknown
+	}
 }

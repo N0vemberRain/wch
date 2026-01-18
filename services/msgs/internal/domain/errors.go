@@ -11,4 +11,6 @@ var (
 
 	ErrSenderID        = errors.New("sender id is invalid")
 	ErrSenderIDIsEmpty = errors.New("sender id is empty")
+
+	ErrNotAllowedToSend = errors.New("user is not allowed to send messages")
 )

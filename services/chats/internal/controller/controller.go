@@ -97,3 +97,23 @@ func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]
 
 	return users, nil
 }
+
+func (c *Controller) GetParticipant(ctx context.Context, chatID uuid.UUID, userID uuid.UUID) (
+	*model.ChatParticipant,
+	error,
+) {
+	if chatID == uuid.Nil {
+		return nil, chats.ErrChatIDNil
+	}
+
+	if userID == uuid.Nil {
+		return nil, chats.ErrUserIDNil
+	}
+
+	p, err := c.repo.GetParticipant(ctx, chatID, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	return p, nil
+}

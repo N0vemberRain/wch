@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	chats "wch/services/chats/internal/domain"
 	"wch/services/chats/internal/domain/model"
 
 	"github.com/google/uuid"
@@ -148,4 +149,32 @@ func (r *ChatRepositoryPg) GetParticipantsIDs(
 	}
 
 	return ids, nil
+}
+
+func (r *ChatRepositoryPg) GetParticipant(ctx context.Context, chatID uuid.UUID, userID uuid.UUID) (
+	*model.ChatParticipant,
+	error,
+) {
+	row := r.db.QueryRow(
+		`SELECT * FROM chat_participants WHERE chat_id=$1 AND user_id=$2;`,
+		chatID.String(),
+		userID,
+	)
+
+	if row.Err() != nil {
+		return nil, row.Err()
+	}
+
+	p := &model.ChatParticipant{}
+	var role string
+	if err := row.Scan(&p.ChatID, &p.UserID, &role, &p.JoinedAt); err != nil {
+		if err == sql.ErrNoRows {
+			return nil, chats.ErrParticipateNotFound
+		} else {
+			return nil, err
+		}
+	}
+	p.Role = model.ChatParticipantRoleFromString(role)
+
+	return p, nil
 }

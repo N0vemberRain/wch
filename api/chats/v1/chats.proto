@@ -43,6 +43,7 @@ service ChatsService {
     rpc AddParticipant(AddParticipantRequest) returns (ParticipantResponse);
     rpc RemoveParticipant(RemoveParticipantRequest) returns (ParticipantResponse);
     rpc ListParticipants(ListParticipantsRequest) returns (ListParticipantsResponse);
+    rpc CheckParticipant(CheckParticipantRequest) returns (CheckParticipantResponse);
 }
 
 message CreateChatRequest {
@@ -94,3 +95,12 @@ message ListParticipantsResponse {
     repeated ChatUser users = 1;
 }
 
+message CheckParticipantRequest {
+    string chat_id = 1;
+    string user_id = 2;
+}
+
+message CheckParticipantResponse {
+    bool is_participant = 1;
+    ChatParticipantRole role = 2;
+}
