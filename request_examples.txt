@@ -27,3 +27,6 @@ grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \
 grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"limit\": 3}' localhost:8086 msgs.v1.MessagesService.ListMessages
 
 grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"limit\": 3, \"cursor\":\"2026-01-13T22:11:53.277682Z|77368942-2e0c-4289-a796-148634ad3255\"}' localhost:8086 msgs.v1.MessagesService.ListMessages
+
+login
+grpcurl -plaintext -d '{\"email\":\"alice@yandex.ru\", \"password\":\"gkrmlekmglek\"}' localhost:8087 auth.v1.AuthService.Login
