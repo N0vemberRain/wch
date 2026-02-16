@@ -30,3 +30,8 @@ grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \
 
 login
 grpcurl -plaintext -d '{\"email\":\"alice@yandex.ru\", \"password\":\"gkrmlekmglek\"}' localhost:8087 auth.v1.AuthService.Login
+
+get messages, the token will be expired 26.02
+grpcurl -plaintext -d '{\"chat_id\": \"30d638ef-9daa-451c-903e-d4cc605aec58\", \"limit\": 3, \"cursor\":\"2026-01-13T22:11:53.277682Z|77368942-2e0c-4289-a796-148634ad3255\"}'  -H "authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJleHAiOjE3NzIxNjg0MDIsInJvbGUiOiJ1c2VyIiwic3ViIjoiNjZlNjM1MGItMzFjMi00YTc3LWE3M2EtMTMzY2JmMThmMTE2In0.SMbnyGlgJDgta-7vvKLUrqtMaThjgDsOJLw_UIClMtw" localhost:8086 msgs.v1.MessagesService.ListMessages
+
+Ошибка: если запросить чат с несуществующим ид, вырнется пустой массив вместо ошибки

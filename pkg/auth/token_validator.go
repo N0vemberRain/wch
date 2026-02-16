@@ -1,58 +1,43 @@
-package jwt
+package auth
 
 import (
 	"errors"
 	"fmt"
 	"time"
-	"wch/services/auth/internal/domain/model"
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 )
 
-type TokenIssuer struct {
+type Token struct {
+	Value     string
+	ExpiresAt time.Time
+	UserID    uuid.UUID
+}
+
+type TokenValidator struct {
 	secret     []byte
 	expireTime time.Duration
 }
 
-func NewTokenIssuer(secret string, expire time.Duration) *TokenIssuer {
-	return &TokenIssuer{
+func NewTokenValidator(secret string, expire time.Duration) *TokenValidator {
+	return &TokenValidator{
 		secret:     []byte(secret),
 		expireTime: expire,
 	}
 }
 
-func (iss *TokenIssuer) Issue(userID uuid.UUID) (*model.Token, error) {
-	exp := time.Now().Add(iss.expireTime * time.Minute)
-	token := jwt.NewWithClaims(jwt.SigningMethodHS256, jwt.MapClaims{
-		"sub":  userID,
-		"role": "user",
-		"exp":  exp.Unix(),
-	})
-
-	tokenStr, err := token.SignedString(iss.secret)
-	if err != nil {
-		return nil, err
-	}
-
-	return &model.Token{
-		Value:     tokenStr,
-		ExpiresAt: exp,
-		UserID:    userID,
-	}, nil
-}
-
-func (iss *TokenIssuer) Validate(tokenStr string) (*model.Token, error) {
+func (tv *TokenValidator) Validate(tokenStr string) (*Token, error) {
 	parsedToken, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("inexpected signing method: %v", token.Header["arg"])
 		}
 
-		return iss.secret, nil
+		return tv.secret, nil
 	})
 
 	if err != nil || !parsedToken.Valid {
-		return nil, errors.New("invalid token")
+		return nil, fmt.Errorf("invalid token: %s\n", err.Error())
 	}
 
 	claims, ok := parsedToken.Claims.(jwt.MapClaims)
@@ -73,7 +58,7 @@ func (iss *TokenIssuer) Validate(tokenStr string) (*model.Token, error) {
 		return nil, errors.New("user id is invalid")
 	}
 
-	return &model.Token{
+	return &Token{
 		Value:     tokenStr,
 		ExpiresAt: expTime.Time,
 		UserID:    userID,

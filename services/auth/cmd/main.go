@@ -6,7 +6,7 @@ import (
 
 	"net"
 
-	"wch/services/auth"
+	"wch/pkg/auth"
 	"wch/services/auth/internal/adapters/bcrypt"
 	handler "wch/services/auth/internal/adapters/grpc"
 	"wch/services/auth/internal/adapters/jwt"
@@ -35,7 +35,8 @@ func main() {
 
 	authRepo := pg.NewCredentialsRepository(db)
 	hasher := bcrypt.NewPasswordHasher(1)
-	issuer := jwt.NewTokenIssuer("secret", 15)
+	issuer := jwt.NewTokenIssuer("secret", 15000)
+	validator := auth.NewTokenValidator("secret", 15000)
 	authCtrl := controller.NewAuthController(authRepo, hasher, issuer)
 	authHandler := handler.NewHandler(authCtrl)
 
@@ -45,7 +46,7 @@ func main() {
 	}
 
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.AuthInterceptor(issuer)),
+		grpc.UnaryInterceptor(auth.AuthInterceptor(validator)),
 	)
 	authpb.RegisterAuthServiceServer(srv, authHandler)
 	reflection.Register(srv)

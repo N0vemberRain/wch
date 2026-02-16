@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"strings"
-	"wch/services/auth/internal/domain/ports"
 
 	"google.golang.org/grpc"
 	"google.golang.org/grpc/codes"
@@ -12,7 +11,7 @@ import (
 	"google.golang.org/grpc/status"
 )
 
-func AuthInterceptor(tokenIssuer ports.TokenIssuer) grpc.UnaryServerInterceptor {
+func AuthInterceptor(validator *TokenValidator) grpc.UnaryServerInterceptor {
 	return func(
 		ctx context.Context,
 		req interface{},
@@ -45,9 +44,9 @@ func AuthInterceptor(tokenIssuer ports.TokenIssuer) grpc.UnaryServerInterceptor 
 			return nil, status.Error(codes.Unauthenticated, "missing token")
 		}
 
-		authToken, err := tokenIssuer.Validate(token)
+		authToken, err := validator.Validate(token)
 		if err != nil {
-			return nil, status.Error(codes.Unauthenticated, "missing metadada")
+			return nil, status.Errorf(codes.Unauthenticated, "missing metadada: %s\n", err.Error())
 		}
 
 		ctx = context.WithValue(ctx, "user_id", authToken.UserID)

@@ -6,6 +6,7 @@ import (
 
 	"net"
 
+	"wch/pkg/auth"
 	chatsgrpc "wch/services/msgs/internal/adapters/chats_grpc"
 	handler "wch/services/msgs/internal/adapters/grpc"
 	pg "wch/services/msgs/internal/adapters/postgres"
@@ -56,7 +57,11 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	srv := grpc.NewServer()
+	tokenValidator := auth.NewTokenValidator("secret", 15000)
+
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.AuthInterceptor(tokenValidator)),
+	)
 	msgspb.RegisterMessagesServiceServer(srv, h)
 	reflection.Register(srv)
 	srv.Serve(lis)
