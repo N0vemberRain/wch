@@ -6,6 +6,7 @@ import (
 
 	"net"
 
+	"wch/services/auth"
 	"wch/services/auth/internal/adapters/bcrypt"
 	handler "wch/services/auth/internal/adapters/grpc"
 	"wch/services/auth/internal/adapters/jwt"
@@ -43,7 +44,9 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	srv := grpc.NewServer()
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.AuthInterceptor(issuer)),
+	)
 	authpb.RegisterAuthServiceServer(srv, authHandler)
 	reflection.Register(srv)
 	srv.Serve(lis)
