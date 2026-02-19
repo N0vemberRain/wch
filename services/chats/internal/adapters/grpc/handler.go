@@ -66,7 +66,10 @@ func (h *Handler) GetChatByID(ctx context.Context, req *chatspb.GetChatByIDReque
 	}
 	chat, err := h.ctrl.GetChatByID(ctx, id)
 	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		if err == chats.ErrChatNotFound {
+			return nil, status.Error(codes.NotFound, err.Error())
+		}
+		return nil, status.Error(codes.Internal, err.Error())
 	}
 
 	return &chatspb.GetChatResponse{

@@ -29,3 +29,7 @@ func (pc *PermissionChecker) CanSendMessage(
 	}
 	return true, nil
 }
+
+func (pc *PermissionChecker) DoesChatExists(ctx context.Context, chatID uuid.UUID) (bool, error) {
+	return pc.chatProvider.ChatExists(ctx, chatID)
+}

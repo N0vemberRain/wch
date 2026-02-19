@@ -7,6 +7,8 @@ import (
 	"wch/services/msgs/internal/domain/model"
 
 	"github.com/google/uuid"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 type ChatProviderGRPC struct {
@@ -35,4 +37,21 @@ func (cp *ChatProviderGRPC) IsUserParticipant(ctx context.Context, chatID uuid.U
 	}
 
 	return true, model.ChatParticipantRoleFromProto(resp.Role), nil
+}
+
+func (cp *ChatProviderGRPC) ChatExists(ctx context.Context, chatID uuid.UUID) (bool, error) {
+	_, err := cp.client.GetChatByID(ctx, &chatspb.GetChatByIDRequest{
+		ChatId: chatID.String(),
+	})
+
+	if err != nil {
+		st, ok := status.FromError(err)
+		if ok && st.Code() == codes.NotFound {
+			return false, nil
+		} else {
+			return false, err
+		}
+	}
+
+	return true, nil
 }

@@ -36,12 +36,20 @@ func (c *Controller) Save(ctx context.Context, msg *model.Message) error {
 	return c.repo.Save(ctx, msg)
 }
 
-func (c *Controller) List(ctx context.Context, chat_id uuid.UUID, limit int, cursor *model.Cursor) ([]model.Message, string, error) {
-	if chat_id == uuid.Nil {
+func (c *Controller) List(ctx context.Context, chatID uuid.UUID, limit int, cursor *model.Cursor) ([]model.Message, string, error) {
+	if chatID == uuid.Nil {
 		return nil, "", domain.ErrChatIsEmpty
 	}
 
-	msgs, err := c.repo.List(ctx, chat_id, limit, cursor)
+	ok, err := c.permChecker.DoesChatExists(ctx, chatID)
+	if err != nil {
+		return nil, "", err
+	}
+	if !ok {
+		return nil, "", domain.ErrChatNotFound
+	}
+
+	msgs, err := c.repo.List(ctx, chatID, limit, cursor)
 	var nextCursor string
 	if err == nil && len(msgs) >= limit {
 		nextCursor = msgs[len(msgs)-1].CreatedAt.Format(time.RFC3339Nano) + "|" + msgs[len(msgs)-1].Id.String()

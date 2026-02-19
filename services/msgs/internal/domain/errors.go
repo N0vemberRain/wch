@@ -13,4 +13,5 @@ var (
 	ErrSenderIDIsEmpty = errors.New("sender id is empty")
 
 	ErrNotAllowedToSend = errors.New("user is not allowed to send messages")
+	ErrChatNotFound     = errors.New("chat not found")
 )

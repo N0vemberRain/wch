@@ -14,5 +14,6 @@ var (
 	ErrUserIDNil = errors.New("user id can't be nil")
 	ErrChatIDNil = errors.New("chat id can't be nil")
 
+	ErrChatNotFound        = errors.New("chat not found")
 	ErrParticipateNotFound = errors.New("participate not found for in the chat")
 )

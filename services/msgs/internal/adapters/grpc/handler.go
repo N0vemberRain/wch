@@ -89,16 +89,24 @@ func (h *Handler) ListMessages(ctx context.Context, req *msgspb.ListMessagesRequ
 	var nextCursor string
 	if req.Cursor == "" {
 		msgs, nextCursor, err = h.ctrl.List(ctx, chat_id, int(req.Limit), nil)
+		if err != nil {
+			if err == domain.ErrChatNotFound {
+				return nil, status.Error(codes.NotFound, err.Error())
+			}
+			return nil, status.Error(codes.Internal, err.Error())
+		}
 	} else {
 		cursor, err := model.NewCursor(req.Cursor)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 		msgs, nextCursor, err = h.ctrl.List(ctx, chat_id, int(req.Limit), cursor)
-	}
-
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, err.Error())
+		if err != nil {
+			if err == domain.ErrChatNotFound {
+				return nil, status.Error(codes.NotFound, err.Error())
+			}
+			return nil, status.Error(codes.Internal, err.Error())
+		}
 	}
 
 	resp := &msgspb.ListMessagesResponse{}

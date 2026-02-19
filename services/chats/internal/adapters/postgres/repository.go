@@ -51,6 +51,9 @@ func (r *ChatRepositoryPg) GetChatByID(ctx context.Context, chatID uuid.UUID) (*
 		&c.UpdatedAt,
 	)
 	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, chats.ErrChatNotFound
+		}
 		return nil, err
 	}
 
