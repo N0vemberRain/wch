@@ -8,6 +8,8 @@ import (
 
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
+
+	"wch/pkg/auth"
 )
 
 type TokenIssuer struct {
@@ -15,10 +17,10 @@ type TokenIssuer struct {
 	expireTime time.Duration
 }
 
-func NewTokenIssuer(secret string, expire time.Duration) *TokenIssuer {
+func NewTokenIssuer(config *auth.Config) *TokenIssuer {
 	return &TokenIssuer{
-		secret:     []byte(secret),
-		expireTime: expire,
+		secret:     []byte(config.Secret),
+		expireTime: config.ExpireTime,
 	}
 }
 

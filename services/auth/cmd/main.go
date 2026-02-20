@@ -35,9 +35,15 @@ func main() {
 
 	authRepo := pg.NewCredentialsRepository(db)
 	hasher := bcrypt.NewPasswordHasher(1)
-	issuer := jwt.NewTokenIssuer("secret", 15000)
-	validator := auth.NewTokenValidator("secret", 15000)
-	authCtrl := controller.NewAuthController(authRepo, hasher, issuer)
+
+	config, err := auth.LoadConfig()
+	if err != nil {
+		log.Fatalf("load auth config: %s\n", err.Error())
+	}
+	tokenValidator := auth.NewTokenValidator(config)
+	tokenIssuer := jwt.NewTokenIssuer(config)
+
+	authCtrl := controller.NewAuthController(authRepo, hasher, tokenIssuer)
 	authHandler := handler.NewHandler(authCtrl)
 
 	lis, err := net.Listen("tcp", "localhost:8087")
@@ -46,7 +52,7 @@ func main() {
 	}
 
 	srv := grpc.NewServer(
-		grpc.UnaryInterceptor(auth.AuthInterceptor(validator)),
+		grpc.UnaryInterceptor(auth.AuthInterceptor(tokenValidator)),
 	)
 	authpb.RegisterAuthServiceServer(srv, authHandler)
 	reflection.Register(srv)

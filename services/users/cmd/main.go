@@ -7,6 +7,7 @@ import (
 	//"net/http"
 	"net"
 
+	"wch/pkg/auth"
 	"wch/services/users/internal/controller"
 
 	//mdgateway "wch/users/internal/gateway/metadata/http"
@@ -29,34 +30,7 @@ func main() {
 	flag.IntVar(&port, "port", 8082, "API handler port")
 	flag.Parse()
 
-	log.Println("Starting the rating service on port %d", port)
-	//registry := discmemory.NewRegistry("localhost:8500")
-	//registry := discmemory.NewRegistry()
-	//if err := nil {
-	//panic(err)
-	//}
-	// ctx := context.Background()
-	// instanceID := discovery.GenerateInstanceID(serviceName)
-
-	// if err := registry.Register(
-	// 	ctx, instanceID,
-	// 	serviceName,
-	// 	fmt.Sprintf("localhost:%d", port),
-	// ); err != nil {
-	// 	panic(err)
-	// }
-
-	// go func() {
-	// 	for {
-	// 		err := registry.ReportHealthState(instanceID, serviceName)
-	// 		if err != nil {
-	// 			log.Println("Failed to report healthy state: " + err.Error())
-	// 		}
-	// 		time.Sleep(1 * time.Second)
-	// 	}
-	// }()
-
-	// defer registry.Deregister(ctx, instanceID, serviceName)
+	log.Printf("Starting the rating service on port %d\n", port)
 
 	db, err := pg.NewPostgresDBFromEnv()
 	if err != nil {
@@ -71,7 +45,16 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	srv := grpc.NewServer()
+	config, err := auth.LoadConfig()
+	if err != nil {
+		log.Fatalf("load auth config: %s\n", err.Error())
+	}
+
+	tokenValidator := auth.NewTokenValidator(config)
+
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.AuthInterceptor(tokenValidator)),
+	)
 	userspb.RegisterUsersServiceServer(srv, h)
 	reflection.Register(srv)
 	srv.Serve(lis)

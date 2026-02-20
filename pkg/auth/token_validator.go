@@ -20,10 +20,10 @@ type TokenValidator struct {
 	expireTime time.Duration
 }
 
-func NewTokenValidator(secret string, expire time.Duration) *TokenValidator {
+func NewTokenValidator(config *Config) *TokenValidator {
 	return &TokenValidator{
-		secret:     []byte(secret),
-		expireTime: expire,
+		secret:     []byte(config.Secret),
+		expireTime: config.ExpireTime,
 	}
 }
 

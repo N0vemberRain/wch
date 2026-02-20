@@ -16,5 +16,10 @@ $env:DB_PASSWORD = "683951"
 $env:DB_NAME = "wch"
 $env:DB_SSLMODE = "disable"
 
+# --- For auth service ---
+$env:JWT_SECRET = "secret"
+$env:JWT_DURATION = "15000"
+
+
 Write-Host "Environment variables loaded."
 Write-Host "Run your service with: go run ./services/users/cmd/main.go"

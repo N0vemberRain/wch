@@ -57,7 +57,12 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	tokenValidator := auth.NewTokenValidator("secret", 15000)
+	config, err := auth.LoadConfig()
+	if err != nil {
+		log.Fatalf("load auth config: %s\n", err.Error())
+	}
+
+	tokenValidator := auth.NewTokenValidator(config)
 
 	srv := grpc.NewServer(
 		grpc.UnaryInterceptor(auth.AuthInterceptor(tokenValidator)),

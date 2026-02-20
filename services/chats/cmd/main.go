@@ -6,6 +6,7 @@ import (
 
 	"net"
 
+	"wch/pkg/auth"
 	handler "wch/services/chats/internal/adapters/grpc"
 	pg "wch/services/chats/internal/adapters/postgres"
 	up "wch/services/chats/internal/adapters/users_grpc"
@@ -52,7 +53,15 @@ func main() {
 		log.Fatalf("failed to listen: %v", err)
 	}
 
-	srv := grpc.NewServer()
+	authConfig, err := auth.LoadConfig()
+	if err != nil {
+		log.Fatalf("auth config load: %v", err)
+	}
+
+	tokenValidator := auth.NewTokenValidator(authConfig)
+	srv := grpc.NewServer(
+		grpc.UnaryInterceptor(auth.AuthInterceptor(tokenValidator)),
+	)
 	pbchats.RegisterChatsServiceServer(srv, h)
 	reflection.Register(srv)
 	srv.Serve(lis)
