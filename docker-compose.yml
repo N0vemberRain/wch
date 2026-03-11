@@ -1,0 +1,59 @@
+version: '3.9'
+
+services:
+  auth:
+    build: 
+      context: .
+      dockerfile: services/auth/Dockerfile
+    container_name: auth
+    ports:
+      - "8087:8080"
+    environment:
+      - SERVICE_AUTH_URL=http://auth:8080
+    networks:
+      - micro-net
+
+  users:
+    build:
+      context: .
+      dockerfile: services/users/Dockerfile
+    container_name: users
+    ports:
+      - "8082:8080"
+    depends_on:
+      - auth
+    environment:
+      - SERVICE_USERS_URL=http://users:8080
+    networks:
+      - micro-net
+
+  chats:
+    build:
+      context: .
+      dockerfile: services/chats/Dockerfile
+    container_name: chats
+    ports:
+      - "8085:8080"
+    depends_on:
+      - auth
+    environment:
+      - SERVICE_CHATS_URL=http://chats:8080
+    networks:
+      - micro-net
+
+  msgs:
+    build:
+      context: .
+      dockerfile: services/msgs/Dockerfile
+    container_name: msgs
+    ports:
+      - "8086:8080"
+    depends_on:
+      - auth
+    environment:
+      - SERVICE_MSGS_URL=http://msgs:8080
+    networks:
+      - micro-net
+networks:
+  micro-net:
+    driver: bridge
