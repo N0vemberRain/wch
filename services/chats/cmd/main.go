@@ -1,8 +1,8 @@
 package main
 
 import (
-	"flag"
 	"log"
+	"os"
 
 	"net"
 
@@ -24,14 +24,18 @@ import (
 const serviceName = "users"
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8085, "API handler port")
-	flag.Parse()
+	// var port int
+	// flag.IntVar(&port, "port", 8085, "API handler port")
+	// flag.Parse()
 
-	log.Printf("Starting the %s service on port %d", serviceName, port)
+	// log.Printf("Starting the %s service on port %d", serviceName, port)
 
+	usersAddr, ok := os.LookupEnv("USERS_SERVICE_ADDR")
+	if !ok {
+		log.Fatalf("Chats Service error: USERS_SERVICE_ADDR is undefined")
+	}
 	usersConn, err := grpc.NewClient(
-		"localhost:8082",
+		usersAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
@@ -48,7 +52,7 @@ func main() {
 	userProvider := up.NewUserProvider(usersClient)
 	chatsCtrl := controller.NewChatController(chatsRepo, userProvider)
 	h := handler.NewHandler(chatsCtrl)
-	lis, err := net.Listen("tcp", "localhost:8085")
+	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -64,5 +68,11 @@ func main() {
 	)
 	pbchats.RegisterChatsServiceServer(srv, h)
 	reflection.Register(srv)
+
+	url, ok := os.LookupEnv("SERVICE_URL")
+	if !ok {
+		log.Fatalf("failed to listen: SERVICE_URL is undefined")
+	}
+	log.Printf("Starting the %s service: %s", serviceName, url)
 	srv.Serve(lis)
 }

@@ -1,8 +1,8 @@
 package main
 
 import (
-	"flag"
 	"log"
+	"os"
 
 	"net"
 
@@ -22,11 +22,11 @@ import (
 const serviceName = "auth"
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8087, "API handler port")
-	flag.Parse()
+	// var port int
+	// flag.IntVar(&port, "port", 8087, "API handler port")
+	// flag.Parse()
 
-	log.Printf("Starting the %s service on port %d", serviceName, port)
+	// log.Printf("Starting the %s service on port %d", serviceName, port)
 
 	db, err := pg.NewPostgresDBFromEnv()
 	if err != nil {
@@ -46,7 +46,7 @@ func main() {
 	authCtrl := controller.NewAuthController(authRepo, hasher, tokenIssuer)
 	authHandler := handler.NewHandler(authCtrl)
 
-	lis, err := net.Listen("tcp", "localhost:8087")
+	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -56,5 +56,11 @@ func main() {
 	)
 	authpb.RegisterAuthServiceServer(srv, authHandler)
 	reflection.Register(srv)
+	url, ok := os.LookupEnv("SERVICE_URL")
+	if !ok {
+		log.Fatalf("failed to listen: SERVICE_URL is undefined")
+	}
+	log.Printf("Starting the %s service: %s", serviceName, url)
+
 	srv.Serve(lis)
 }

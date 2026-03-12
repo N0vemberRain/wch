@@ -1,8 +1,8 @@
 package main
 
 import (
-	"flag"
 	"log"
+	"os"
 
 	"net"
 
@@ -25,14 +25,18 @@ import (
 const serviceName = "msgs"
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8086, "API handler port")
-	flag.Parse()
+	// var port int
+	// flag.IntVar(&port, "port", 8086, "API handler port")
+	// flag.Parse()
 
-	log.Printf("Starting the %s service on port %d", serviceName, port)
+	// log.Printf("Starting the %s service on port %d", serviceName, port)
+	chatsAddr, ok := os.LookupEnv("CHATS_SERVICE_ADDR")
+	if !ok {
+		log.Fatalf("Chats Service error: CHATS_SERVICE_ADDR is undefined")
+	}
 
 	chatsConn, err := grpc.NewClient(
-		"localhost:8085",
+		chatsAddr,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
 	)
 	if err != nil {
@@ -52,7 +56,7 @@ func main() {
 
 	msgsCtrl := controller.NewMessageController(msgsRepo, permChecker)
 	h := handler.NewHandler(msgsCtrl)
-	lis, err := net.Listen("tcp", "localhost:8086")
+	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -69,6 +73,11 @@ func main() {
 	)
 	msgspb.RegisterMessagesServiceServer(srv, h)
 	reflection.Register(srv)
+	url, ok := os.LookupEnv("SERVICE_URL")
+	if !ok {
+		log.Fatalf("failed to listen: SERVICE_URL is undefined")
+	}
+	log.Printf("Starting the %s service: %s", serviceName, url)
 	srv.Serve(lis)
 
 }

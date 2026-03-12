@@ -1,8 +1,8 @@
 package main
 
 import (
-	"flag"
 	"log"
+	"os"
 
 	//"net/http"
 	"net"
@@ -26,11 +26,11 @@ import (
 const serviceName = "users"
 
 func main() {
-	var port int
-	flag.IntVar(&port, "port", 8082, "API handler port")
-	flag.Parse()
+	// var port int
+	// flag.IntVar(&port, "port", 8082, "API handler port")
+	// flag.Parse()
 
-	log.Printf("Starting the rating service on port %d\n", port)
+	// log.Printf("Starting the rating service on port %d\n", port)
 
 	db, err := pg.NewPostgresDBFromEnv()
 	if err != nil {
@@ -40,7 +40,7 @@ func main() {
 	userRepo := pg.NewUserRepositoryPg(db)
 	userCtrl := controller.NewUserController(userRepo)
 	h := grpchandler.New(userCtrl)
-	lis, err := net.Listen("tcp", "localhost:8082")
+	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {
 		log.Fatalf("failed to listen: %v", err)
 	}
@@ -57,5 +57,10 @@ func main() {
 	)
 	userspb.RegisterUsersServiceServer(srv, h)
 	reflection.Register(srv)
+	url, ok := os.LookupEnv("SERVICE_URL")
+	if !ok {
+		log.Fatalf("failed to listen: SERVICE_URL is undefined")
+	}
+	log.Printf("Starting the %s service: %s", serviceName, url)
 	srv.Serve(lis)
 }
