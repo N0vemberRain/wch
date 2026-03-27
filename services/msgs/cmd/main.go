@@ -3,12 +3,14 @@ package main
 import (
 	"log"
 	"os"
+	"strings"
 
 	"net"
 
 	"wch/pkg/auth"
 	chatsgrpc "wch/services/msgs/internal/adapters/chats_grpc"
 	handler "wch/services/msgs/internal/adapters/grpc"
+	"wch/services/msgs/internal/adapters/kafka"
 	pg "wch/services/msgs/internal/adapters/postgres"
 	"wch/services/msgs/internal/domain/shared"
 
@@ -53,8 +55,16 @@ func main() {
 	chatsClient := chatspb.NewChatsServiceClient(chatsConn)
 	chatsProvider := chatsgrpc.NewChatProvider(chatsClient)
 	permChecker := shared.NewPermissionChecker(chatsProvider)
+	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
+	if len(brokers) == 0 {
+		log.Fatal("event publisher settings: KAFKA_BROKERS not found")
+	}
+	eventPublisher, err := kafka.NewProducer(brokers, "message_sent")
+	if err != nil {
+		log.Fatalf("event publisher settings: %s", err.Error())
+	}
 
-	msgsCtrl := controller.NewMessageController(msgsRepo, permChecker)
+	msgsCtrl := controller.NewMessageController(msgsRepo, permChecker, eventPublisher)
 	h := handler.NewHandler(msgsCtrl)
 	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {

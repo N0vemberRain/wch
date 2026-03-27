@@ -2,6 +2,7 @@ package controller
 
 import (
 	"context"
+	"encoding/json"
 	"time"
 	"wch/services/msgs/internal/domain"
 	"wch/services/msgs/internal/domain/model"
@@ -14,12 +15,18 @@ import (
 type Controller struct {
 	repo        ports.MessageRepository
 	permChecker *shared.PermissionChecker
+	publisher   ports.EventPublisher
 }
 
-func NewMessageController(repo ports.MessageRepository, permChecker *shared.PermissionChecker) *Controller {
+func NewMessageController(
+	repo ports.MessageRepository,
+	permChecker *shared.PermissionChecker,
+	publisher ports.EventPublisher,
+) *Controller {
 	return &Controller{
 		repo:        repo,
 		permChecker: permChecker,
+		publisher:   publisher,
 	}
 }
 
@@ -33,7 +40,20 @@ func (c *Controller) Save(ctx context.Context, msg *model.Message) error {
 	}
 	msg.Id = uuid.New()
 	msg.CreatedAt = time.Now()
-	return c.repo.Save(ctx, msg)
+	c.repo.Save(ctx, msg)
+	event := &domain.MessageSentEvent{
+		Type:      "MESSAGE_SENT",
+		ID:        msg.Id,
+		ChatID:    msg.ChatId,
+		SenderID:  msg.SenderId,
+		Content:   msg.Content,
+		Timestamp: msg.CreatedAt,
+	}
+	payload, err := json.Marshal(event)
+	if err != nil {
+		return err
+	}
+	return c.publisher.Publish(ctx, "message_event", msg.ChatId.String(), payload)
 }
 
 func (c *Controller) List(ctx context.Context, chatID uuid.UUID, limit int, cursor *model.Cursor) ([]model.Message, string, error) {
