@@ -17,7 +17,7 @@ services:
       DB_NAME: wch
       DB_SSLMODE: disable
       JWT_SECRET: secret
-      JWT_DURATION: 120
+      JWT_DURATION: 1000
       USERS_SERVICE_ADDR: users:8080
     networks:
       - micro-net

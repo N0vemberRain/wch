@@ -3,6 +3,7 @@ package grpc
 import (
 	"context"
 	"errors"
+	"log"
 	msgspb "wch/gen/msgs/v1"
 	"wch/services/msgs/internal/controller"
 	"wch/services/msgs/internal/domain"
@@ -68,6 +69,7 @@ func (h *Handler) ListMessages(ctx context.Context, req *msgspb.ListMessagesRequ
 	*msgspb.ListMessagesResponse,
 	error,
 ) {
+	log.Println("msgs.Handler.ListMessages: ", req)
 	if req == nil {
 		return nil, status.Error(codes.InvalidArgument, ErrRequestIsEmpty.Error())
 	}
@@ -87,6 +89,7 @@ func (h *Handler) ListMessages(ctx context.Context, req *msgspb.ListMessagesRequ
 
 	msgs := make([]model.Message, 0)
 	var nextCursor string
+	log.Println("msgs.Handler.ListMessages: before Controller.List")
 	if req.Cursor == "" {
 		msgs, nextCursor, err = h.ctrl.List(ctx, chat_id, int(req.Limit), nil)
 		if err != nil {
@@ -108,6 +111,7 @@ func (h *Handler) ListMessages(ctx context.Context, req *msgspb.ListMessagesRequ
 			return nil, status.Error(codes.Internal, err.Error())
 		}
 	}
+	log.Println("msgs.Handler.ListMessages: after Controller.List")
 
 	resp := &msgspb.ListMessagesResponse{}
 	for _, msg := range msgs {

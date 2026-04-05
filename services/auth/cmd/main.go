@@ -1,6 +1,7 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
@@ -40,6 +41,7 @@ func main() {
 	if err != nil {
 		log.Fatalf("load auth config: %s\n", err.Error())
 	}
+	fmt.Printf("DURATION TIME: %v\n", config.ExpireTime)
 	tokenValidator := auth.NewTokenValidator(config)
 	tokenIssuer := jwt.NewTokenIssuer(config)
 

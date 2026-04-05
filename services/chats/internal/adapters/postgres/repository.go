@@ -4,6 +4,7 @@ import (
 	"context"
 	"database/sql"
 	"errors"
+	"log"
 	chats "wch/services/chats/internal/domain"
 	"wch/services/chats/internal/domain/model"
 
@@ -38,6 +39,7 @@ func (r *ChatRepositoryPg) CreateChat(ctx context.Context, c *model.Chat) error 
 }
 
 func (r *ChatRepositoryPg) GetChatByID(ctx context.Context, chatID uuid.UUID) (*model.Chat, error) {
+	log.Println("ChatRepositoryPg.GetChatByID: entering...")
 	c := &model.Chat{}
 	var chat_type string
 	err := r.db.QueryRow(
@@ -62,6 +64,7 @@ func (r *ChatRepositoryPg) GetChatByID(ctx context.Context, chatID uuid.UUID) (*
 		return nil, err
 	}
 
+	log.Println("ChatRepositoryPg.GetChatByID: exiting...")
 	return c, nil
 }
 

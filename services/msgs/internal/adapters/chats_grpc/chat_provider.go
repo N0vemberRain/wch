@@ -2,6 +2,7 @@ package chatsgrpc
 
 import (
 	"context"
+	"log"
 
 	chatspb "wch/gen/chats/v1"
 	"wch/services/msgs/internal/domain/model"
@@ -40,6 +41,7 @@ func (cp *ChatProviderGRPC) IsUserParticipant(ctx context.Context, chatID uuid.U
 }
 
 func (cp *ChatProviderGRPC) ChatExists(ctx context.Context, chatID uuid.UUID) (bool, error) {
+	log.Println("ChatProviderGRPC.ChatExists: entering...")
 	_, err := cp.client.GetChatByID(ctx, &chatspb.GetChatByIDRequest{
 		ChatId: chatID.String(),
 	})
@@ -53,5 +55,6 @@ func (cp *ChatProviderGRPC) ChatExists(ctx context.Context, chatID uuid.UUID) (b
 		}
 	}
 
+	log.Println("ChatProviderGRPC.ChatExists: exiting...")
 	return true, nil
 }

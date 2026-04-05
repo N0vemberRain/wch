@@ -3,6 +3,7 @@ package jwt
 import (
 	"errors"
 	"fmt"
+	"log"
 	"time"
 	"wch/services/auth/internal/domain/model"
 
@@ -45,6 +46,7 @@ func (iss *TokenIssuer) Issue(userID uuid.UUID) (*model.Token, error) {
 }
 
 func (iss *TokenIssuer) Validate(tokenStr string) (*model.Token, error) {
+	log.Println("AuthInterceptor.Validate")
 	parsedToken, err := jwt.Parse(tokenStr, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
 			return nil, fmt.Errorf("inexpected signing method: %v", token.Header["arg"])
@@ -53,6 +55,7 @@ func (iss *TokenIssuer) Validate(tokenStr string) (*model.Token, error) {
 		return iss.secret, nil
 	})
 
+	log.Println("AuthInterceptor.Validate: start checking claims")
 	if err != nil || !parsedToken.Valid {
 		return nil, errors.New("invalid token")
 	}

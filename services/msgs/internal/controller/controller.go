@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"encoding/json"
+	"log"
 	"time"
 	"wch/services/msgs/internal/domain"
 	"wch/services/msgs/internal/domain/model"
@@ -61,6 +62,7 @@ func (c *Controller) List(ctx context.Context, chatID uuid.UUID, limit int, curs
 		return nil, "", domain.ErrChatIsEmpty
 	}
 
+	log.Println("msgs.Controller.List: checking if chat exists")
 	ok, err := c.permChecker.DoesChatExists(ctx, chatID)
 	if err != nil {
 		return nil, "", err
@@ -69,6 +71,7 @@ func (c *Controller) List(ctx context.Context, chatID uuid.UUID, limit int, curs
 		return nil, "", domain.ErrChatNotFound
 	}
 
+	log.Println("msgs.Controller.List: calling Repository.List")
 	msgs, err := c.repo.List(ctx, chatID, limit, cursor)
 	var nextCursor string
 	if err == nil && len(msgs) >= limit {
