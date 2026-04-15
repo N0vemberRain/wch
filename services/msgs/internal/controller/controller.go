@@ -54,7 +54,7 @@ func (c *Controller) Save(ctx context.Context, msg *model.Message) error {
 	if err != nil {
 		return err
 	}
-	return c.publisher.Publish(ctx, "message_event", msg.ChatId.String(), payload)
+	return c.publisher.Publish(ctx, "message_sent", msg.ChatId.String(), payload)
 }
 
 func (c *Controller) List(ctx context.Context, chatID uuid.UUID, limit int, cursor *model.Cursor) ([]model.Message, string, error) {
