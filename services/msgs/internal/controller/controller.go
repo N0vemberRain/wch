@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"log"
 	"time"
+	"wch/pkg/events"
 	"wch/services/msgs/internal/domain"
 	"wch/services/msgs/internal/domain/model"
 	"wch/services/msgs/internal/domain/ports"
@@ -42,7 +43,7 @@ func (c *Controller) Save(ctx context.Context, msg *model.Message) error {
 	msg.Id = uuid.New()
 	msg.CreatedAt = time.Now()
 	c.repo.Save(ctx, msg)
-	event := &domain.MessageSentEvent{
+	event := &events.MessageSentEvent{
 		Type:      "MESSAGE_SENT",
 		ID:        msg.Id,
 		ChatID:    msg.ChatId,

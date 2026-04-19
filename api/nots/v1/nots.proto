@@ -1,0 +1,18 @@
+syntax = "proto3";
+
+package nots.v1;
+option go_package = "wch/gen/nots/v1;notspb";
+
+message Notification {
+    string user_id = 1;
+    string chat_id = 2;
+    string content = 3;
+}
+
+service NotificationService {
+    rpc Subscribe(SubscribeRequest) returns (stream Notification);
+}
+
+message SubscribeRequest {
+    string user_id = 1;
+}
