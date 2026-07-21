@@ -50,11 +50,20 @@ func (r *UserRepositoryPg) GetUserByID(ctx context.Context, id string) (*model.U
 	u := &model.User{}
 	if err := r.db.QueryRow(
 		`SELECT id, username, email, password_hash, 
-		first_name, last_name, surname, avatar_url, 
-		status, department_id, created_at, updated_at
+		first_name, last_name, surname, avatar_url, department_id
 		FROM users WHERE id=$1`,
 		id,
-	).Scan(&u); err != nil {
+	).Scan(
+		&u.ID,
+		&u.Username,
+		&u.Email,
+		&u.PasswordHash,
+		&u.FirstName,
+		&u.LastName,
+		&u.Surname,
+		&u.AvatarURL,
+		&u.DepartmentID,
+	); err != nil {
 		return nil, err
 	}
 

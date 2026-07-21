@@ -19,6 +19,8 @@ import (
 	"google.golang.org/grpc/credentials/insecure"
 )
 
+const serviceName = "nots"
+
 func main() {
 	brokers := strings.Split(os.Getenv("KAFKA_BROKERS"), ",")
 	if len(brokers) == 0 {
@@ -55,13 +57,14 @@ func main() {
 		"notification-group",
 		msgsHandler,
 	)
-	ctx, cancel := context.WithCancel(context.Background())
-	defer cancel()
+	// ctx, cancel := context.WithCancel(context.Background())
+	// defer cancel()
+	ctx := context.Background()
 
 	go consumer.Start(ctx)
 
 	// start gRPC server
-	lis, _ := net.Listen("tcp", ":8081")
+	lis, _ := net.Listen("tcp", ":8080")
 	srv := grpc.NewServer()
 
 	grpcServer := handler.NewGRPCServer(hub)
@@ -70,5 +73,10 @@ func main() {
 		grpcServer,
 	)
 
-	go srv.Serve(lis)
+	url, ok := os.LookupEnv("SERVICE_URL")
+	if !ok {
+		log.Fatalf("failed to listen: SERVICE_URL is undefined")
+	}
+	log.Printf("Starting the %s service: %s", serviceName, url)
+	srv.Serve(lis)
 }

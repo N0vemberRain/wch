@@ -21,6 +21,7 @@ func (s *GRPCServer) Subscribe(
 	req *notspb.SubscribeRequest,
 	stream notspb.NotificationService_SubscribeServer,
 ) error {
+	log.Println("GRPCServer.Subscribe: starting... ", req)
 	userID := req.GetUserId()
 	log.Println("User subscribed: ", userID)
 
