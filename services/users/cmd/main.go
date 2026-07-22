@@ -8,6 +8,7 @@ import (
 	"net"
 
 	"wch/pkg/auth"
+	"wch/services/users/internal/adapters"
 	"wch/services/users/internal/controller"
 
 	//mdgateway "wch/users/internal/gateway/metadata/http"
@@ -38,7 +39,11 @@ func main() {
 	}
 
 	userRepo := pg.NewUserRepositoryPg(db)
-	userCtrl := controller.NewUserController(userRepo)
+	av_storage, err := adapters.NewLocalAvatarStorage("avatars/")
+	if err != nil {
+		log.Fatalf("Avatar storage: %s", err)
+	}
+	userCtrl := controller.NewUserController(userRepo, av_storage)
 	h := grpchandler.New(userCtrl)
 	lis, err := net.Listen("tcp", ":8080")
 	if err != nil {

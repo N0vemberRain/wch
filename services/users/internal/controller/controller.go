@@ -13,11 +13,15 @@ import (
 
 // Controller defines an users service controller
 type UserController struct {
-	repo repository.UserRepository
+	repo       repository.UserRepository
+	av_storage repository.AvatarStorage
 }
 
-func NewUserController(repo repository.UserRepository) *UserController {
-	return &UserController{repo: repo}
+func NewUserController(
+	repo repository.UserRepository,
+	av_storage repository.AvatarStorage,
+) *UserController {
+	return &UserController{repo: repo, av_storage: av_storage}
 }
 
 func (c *UserController) CreateUser(ctx context.Context, u *model.User) error {
@@ -32,6 +36,29 @@ func (c *UserController) CreateUser(ctx context.Context, u *model.User) error {
 	}
 
 	return nil
+}
+
+func (c *UserController) UpdateUser(ctx context.Context, u *model.User, av_bytes []byte) error {
+	if u == nil {
+		return domain.ErrInvalidUserData
+	}
+	oldUsr, err := c.repo.GetUserByID(ctx, u.ID.String())
+	if err != nil {
+		return err
+	}
+
+	if len(av_bytes) != 0 {
+		key, err := c.av_storage.Save(ctx, u.ID, av_bytes)
+		if err != nil {
+			return err
+		}
+
+		u.AvatarURL = key
+	} else {
+		u.AvatarURL = oldUsr.AvatarURL
+	}
+
+	return c.repo.UpdateUser(ctx, u)
 }
 
 // GetByID returns the user's details
@@ -70,4 +97,13 @@ func (c *UserController) SearchUsers(ctx context.Context, filter model.SearchFil
 
 func (c *UserController) GetAll(ctx context.Context) ([]*model.User, error) {
 	return c.repo.GetAll(ctx)
+}
+
+func (c *UserController) GetAvatarForUser(ctx context.Context, user_id string) ([]byte, error) {
+	u, err := c.repo.GetUserByID(ctx, user_id)
+	if err != nil {
+		return nil, err
+	}
+
+	return c.av_storage.Get(ctx, u.AvatarURL)
 }

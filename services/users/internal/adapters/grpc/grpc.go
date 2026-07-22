@@ -12,6 +12,7 @@ import (
 	domain "wch/services/users/internal/domain"
 	"wch/services/users/internal/domain/model"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -46,6 +47,43 @@ func (h *Handler) CreateUser(ctx context.Context, req *userspb.CreateUserRequest
 	}
 
 	err = h.usr_ctrl.CreateUser(ctx, usr)
+	if err != nil {
+		return nil, status.Errorf(codes.Internal, err.Error())
+	}
+
+	return &userspb.UserResponse{}, nil
+}
+
+func (h *Handler) UpdateUser(ctx context.Context, req *userspb.UpdateUserRequest) (*userspb.UserResponse, error) {
+	if req == nil || req.User == nil {
+		return nil, status.Errorf(codes.InvalidArgument, "nil req or empty id")
+	} else if req.User.Username == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "username is empty")
+	} else if req.User.Email == "" {
+		return nil, status.Errorf(codes.InvalidArgument, "email is empty")
+	} else if !strings.Contains(req.User.Email, "@") {
+		return nil, status.Errorf(codes.InvalidArgument, "email must contain @")
+	} /* else if req.User.PasswordHash == "" {
+	 	return nil, status.Errorf(codes.InvalidArgument, "password hash is empty")
+	}*/
+
+	usr, err := model.UserFromProto(req.User)
+	if err != nil {
+		return nil, status.Errorf(codes.InvalidArgument, err.Error())
+	}
+
+	if id_str := ctx.Value("user_id").(uuid.UUID); id_str != uuid.Nil {
+		usr.ID = id_str
+	} else {
+		return nil, status.Errorf(codes.Unauthenticated, "user id is undefined")
+	}
+
+	var avBytes []byte
+	if req.Avatar != nil {
+		avBytes = req.Avatar.Data
+	}
+
+	err = h.usr_ctrl.UpdateUser(ctx, usr, avBytes)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
 	}
@@ -151,4 +189,27 @@ func (h *Handler) ListUsers(ctx context.Context, req *userspb.ListUsersRequest) 
 	}
 
 	return resp, nil
+}
+
+func (h *Handler) GetAvatarForUser(ctx context.Context, req *userspb.GetAvatarRequest) (*userspb.AvatarResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is empty")
+	}
+
+	av_bytes, err := h.usr_ctrl.GetAvatarForUser(ctx, req.UserId)
+	if err != nil {
+		if errors.Is(domain.ErrNotFound, err) {
+			return nil, status.Errorf(codes.NotFound, err.Error())
+		} else {
+			return nil, status.Errorf(codes.Internal, err.Error())
+		}
+	}
+
+	return &userspb.AvatarResponse{
+		Avatar: &userspb.Avatar{
+			MimeType: "PNG",
+			Data:     av_bytes,
+		},
+		UserId: req.UserId,
+	}, nil
 }

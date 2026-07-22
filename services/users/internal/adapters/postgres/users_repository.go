@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"wch/services/users/internal/domain/model"
 
@@ -46,6 +47,25 @@ func (r *UserRepositoryPg) CreateUser(ctx context.Context, u *model.User) error 
 	return nil
 }
 
+func (r *UserRepositoryPg) UpdateUser(ctx context.Context, u *model.User) error {
+	if err := r.db.QueryRow(
+		`UPDATE users SET
+		 username = $1,
+		 email = $2,
+		 avatar_url = $3,
+		 updated_at = $4 WHERE id = $5`,
+		u.Username,
+		u.Email,
+		u.AvatarURL,
+		u.UpdatedAt,
+		u.ID,
+	); err.Err() != nil {
+		return fmt.Errorf("UserRepositoryPg.UpdateUser: %v\n", err)
+	}
+
+	return nil
+}
+
 func (r *UserRepositoryPg) GetUserByID(ctx context.Context, id string) (*model.User, error) {
 	u := &model.User{}
 	if err := r.db.QueryRow(
@@ -64,7 +84,7 @@ func (r *UserRepositoryPg) GetUserByID(ctx context.Context, id string) (*model.U
 		&u.AvatarURL,
 		&u.DepartmentID,
 	); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("UserRepositoryPg.GetUserByID: id: %s", id)
 	}
 
 	return u, nil
@@ -125,10 +145,6 @@ func (r *UserRepositoryPg) GetUserByEmail(ctx context.Context, email string) (*m
 
 func (r *UserRepositoryPg) GetUserByName(ctx context.Context, username string) (*model.User, error) {
 	return nil, nil
-}
-
-func (r *UserRepositoryPg) UpdateUser(ctx context.Context, u *model.User) error {
-	return nil
 }
 
 func (r *UserRepositoryPg) DeleteUser(ctx context.Context, id string) error {
