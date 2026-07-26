@@ -262,3 +262,64 @@ func (h *Handler) CheckParticipant(ctx context.Context, req *chatspb.CheckPartic
 		Role:          chatspb.ChatParticipantRole(participant.Role),
 	}, nil
 }
+
+func (h *Handler) ListChatsForUser(ctx context.Context, req *chatspb.ListChatsForUserRequest) (
+	*chatspb.ListChatsForUserResponse,
+	error,
+) {
+	if req == nil {
+		return nil, ErrRequestIsEmpty
+	}
+
+	userID, err := uuid.Parse(req.UserId)
+	if err != nil {
+		return nil, status.Error(codes.InvalidArgument, err.Error())
+	}
+
+	chats, err := h.ctrl.ListChatsForUser(ctx, userID)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &chatspb.ListChatsForUserResponse{}
+	for _, c := range chats {
+		resp.Chats = append(resp.Chats, model.ChatToProto(&c))
+	}
+
+	return resp, nil
+}
+
+func (h *Handler) ListAvatarsForChats(ctx context.Context, req *chatspb.ListAvatarsForChatsRequest) (
+	*chatspb.ListAvatarsForChatsResponse,
+	error,
+) {
+	if req == nil {
+		return nil, ErrRequestIsEmpty
+	}
+
+	var ids []uuid.UUID
+	for _, id_str := range req.Ids {
+		id, err := uuid.Parse(id_str)
+		if err != nil {
+			return nil, status.Error(codes.InvalidArgument, err.Error())
+		}
+
+		ids = append(ids, id)
+	}
+
+	avatars, err := h.ctrl.ListAvatarsForChats(ctx, ids)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &chatspb.ListAvatarsForChatsResponse{}
+	for _, a := range avatars {
+		aProto, err := model.AvatarToProto(&a)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		resp.Avatars = append(resp.Avatars, aProto)
+	}
+
+	return resp, nil
+}

@@ -41,3 +41,30 @@ func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) 
 
 	return users, nil
 }
+
+func (up *UserProviderGRPC) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID) (
+	[]model.Avatar,
+	error,
+) {
+	req := &userspb.GetAvatarsForChatsRequest{
+		Ids: model.IDsToString(ids),
+	}
+
+	resp, err := up.client.GetAvatarsForChats(ctx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	avatars := make([]model.Avatar, 0)
+	for _, aProto := range resp.Avatars {
+		a := model.Avatar{
+			Data:     aProto.Data,
+			MimeType: aProto.MimeType,
+			OwnerID:  uuid.MustParse(aProto.OwnerId),
+		}
+
+		avatars = append(avatars, a)
+	}
+
+	return avatars, nil
+}

@@ -4,6 +4,7 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"strings"
 
 	userspb "wch/gen/users/v1"
@@ -83,6 +84,7 @@ func (h *Handler) UpdateUser(ctx context.Context, req *userspb.UpdateUserRequest
 		avBytes = req.Avatar.Data
 	}
 
+	log.Println("Handler.UpdateUser")
 	err = h.usr_ctrl.UpdateUser(ctx, usr, avBytes)
 	if err != nil {
 		return nil, status.Errorf(codes.Internal, err.Error())
@@ -212,4 +214,38 @@ func (h *Handler) GetAvatarForUser(ctx context.Context, req *userspb.GetAvatarRe
 		},
 		UserId: req.UserId,
 	}, nil
+}
+
+func (h *Handler) GetAvatarsForChats(ctx context.Context, req *userspb.GetAvatarsForChatsRequest) (
+	*userspb.GetAvatarsForChatsResponse,
+	error,
+) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is empty")
+	}
+
+	var ids []uuid.UUID
+	for _, id_str := range req.Ids {
+		id, err := uuid.Parse(id_str)
+		if err != nil {
+			return nil, domain.ErrInvalidUserData
+		}
+		ids = append(ids, id)
+	}
+
+	avatars, err := h.usr_ctrl.GetAvatarsForChats(ctx, ids)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &userspb.GetAvatarsForChatsResponse{}
+	for _, a := range avatars {
+		aProto, err := model.AvatarToProto(&a)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		resp.Avatars = append(resp.Avatars, aProto)
+	}
+
+	return resp, nil
 }

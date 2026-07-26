@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"errors"
+	"log"
 
 	"wch/services/users/internal/domain"
 	"wch/services/users/internal/domain/model"
@@ -39,14 +40,17 @@ func (c *UserController) CreateUser(ctx context.Context, u *model.User) error {
 }
 
 func (c *UserController) UpdateUser(ctx context.Context, u *model.User, av_bytes []byte) error {
+	log.Println("UserController.UpdateUser: enter")
 	if u == nil {
 		return domain.ErrInvalidUserData
 	}
+	log.Println("UserController.UpdateUser: before get user")
 	oldUsr, err := c.repo.GetUserByID(ctx, u.ID.String())
 	if err != nil {
 		return err
 	}
 
+	log.Println("UserController.UpdateUser: before avatar saving")
 	if len(av_bytes) != 0 {
 		key, err := c.av_storage.Save(ctx, u.ID, av_bytes)
 		if err != nil {
@@ -55,9 +59,11 @@ func (c *UserController) UpdateUser(ctx context.Context, u *model.User, av_bytes
 
 		u.AvatarURL = key
 	} else {
+		log.Println("UserController.UpdateUser:  av bytes empty")
 		u.AvatarURL = oldUsr.AvatarURL
 	}
 
+	log.Println("UserController.UpdateUser: end")
 	return c.repo.UpdateUser(ctx, u)
 }
 
@@ -106,4 +112,26 @@ func (c *UserController) GetAvatarForUser(ctx context.Context, user_id string) (
 	}
 
 	return c.av_storage.Get(ctx, u.AvatarURL)
+}
+
+func (c *UserController) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID) (
+	[]model.Avatar,
+	error,
+) {
+	var avatars []model.Avatar
+	for _, id := range ids {
+		bytes, err := c.av_storage.Get(ctx, id.String())
+		if err != nil {
+			break
+		}
+
+		var a model.Avatar
+		a.Data = bytes
+		a.MimeType = "PNG"
+		a.OwnerID = id
+
+		avatars = append(avatars, a)
+	}
+
+	return avatars, nil
 }

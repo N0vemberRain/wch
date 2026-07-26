@@ -52,3 +52,11 @@ func UserFromProto(u *userspb.User) (*User, error) {
 		UpdatedAt:    updatedAt,
 	}, nil
 }
+
+func AvatarToProto(a *Avatar) (*userspb.Avatar, error) {
+	return &userspb.Avatar{
+		Data:     a.Data,
+		MimeType: a.MimeType,
+		OwnerId:  a.OwnerID.String(),
+	}, nil
+}

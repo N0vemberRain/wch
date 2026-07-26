@@ -105,3 +105,11 @@ func ChatParticipantRoleFromString(role string) ChatParticipantRole {
 		return ChatParticipantUnknown
 	}
 }
+
+func AvatarToProto(a *Avatar) (*chatspb.Avatar, error) {
+	return &chatspb.Avatar{
+		Data:     a.Data,
+		MimeType: a.MimeType,
+		OwnerId:  a.OwnerID.String(),
+	}, nil
+}

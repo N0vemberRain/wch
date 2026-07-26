@@ -34,3 +34,9 @@ func NewUser(username, email, passwdHash, firstName, lastName, surname string) *
 		UpdatedAt:    time.Now(),
 	}
 }
+
+type Avatar struct {
+	Data     []byte
+	MimeType string
+	OwnerID  uuid.UUID
+}

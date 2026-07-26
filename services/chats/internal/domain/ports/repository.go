@@ -18,4 +18,6 @@ type Repository interface {
 	RemoveParticipant(ctx context.Context, chatID, userID uuid.UUID) error
 	GetParticipantsIDs(ctx context.Context, chatID uuid.UUID) ([]uuid.UUID, error)
 	GetParticipant(ctx context.Context, chatID uuid.UUID, userID uuid.UUID) (*model.ChatParticipant, error)
+
+	GetChatsForUser(ctx context.Context, userID uuid.UUID) ([]model.Chat, error)
 }

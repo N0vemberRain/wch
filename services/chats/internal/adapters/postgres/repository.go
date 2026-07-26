@@ -9,6 +9,7 @@ import (
 	"wch/services/chats/internal/domain/model"
 
 	"github.com/google/uuid"
+	"github.com/lib/pq"
 )
 
 var ErrHasntBeenDone error = errors.New("the method hasn't been done yet")
@@ -183,4 +184,75 @@ func (r *ChatRepositoryPg) GetParticipant(ctx context.Context, chatID uuid.UUID,
 	p.Role = model.ChatParticipantRoleFromString(role)
 
 	return p, nil
+}
+
+func (r *ChatRepositoryPg) GetChatsForUser(ctx context.Context, userID uuid.UUID) (
+	[]model.Chat,
+	error,
+) {
+	chats_ids_rows, err := r.db.QueryContext(
+		ctx,
+		`SELECT chat_id FROM chat_participants WHERE user_id = $1;`,
+		userID.String(),
+	)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, chats.ErrChatNotFound
+		} else {
+			return nil, err
+		}
+	}
+	defer chats_ids_rows.Close()
+
+	var ids []string
+	for chats_ids_rows.Next() {
+		var id string
+		err = chats_ids_rows.Scan(&id)
+		if err != nil {
+			return nil, err
+		}
+
+		ids = append(ids, id)
+	}
+
+	chats_data_rows, err := r.db.QueryContext(
+		ctx,
+		`SELECT id, type, name, created_at, updated_at FROM chats WHERE id = ANY($1)`,
+		pq.Array(ids),
+	)
+
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, chats.ErrChatNotFound
+		} else {
+			return nil, err
+		}
+	}
+	defer chats_data_rows.Close()
+
+	var chats []model.Chat
+	for chats_data_rows.Next() {
+		var c model.Chat
+		var chat_type string
+		err = chats_data_rows.Scan(
+			&c.ID,
+			&chat_type,
+			&c.Name,
+			&c.CreatedAt,
+			&c.UpdatedAt,
+		)
+		if err != nil {
+			return nil, err
+		}
+
+		t, err := model.ChatTypeFromString(chat_type)
+		if err != nil {
+			return nil, err
+		}
+
+		c.Type = t
+		chats = append(chats, c)
+	}
+
+	return chats, nil
 }

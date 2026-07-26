@@ -117,3 +117,31 @@ func (c *Controller) GetParticipant(ctx context.Context, chatID uuid.UUID, userI
 
 	return p, nil
 }
+
+func (c *Controller) ListChatsForUser(ctx context.Context, userID uuid.UUID) (
+	[]model.Chat,
+	error,
+) {
+	if userID == uuid.Nil {
+		return nil, chats.ErrUserIDNil
+	}
+
+	return c.repo.GetChatsForUser(ctx, userID)
+}
+
+func (c *Controller) ListAvatarsForChats(ctx context.Context, ids []uuid.UUID) (
+	[]model.Avatar,
+	error,
+) {
+	if len(ids) == 0 {
+		return nil, chats.ErrChatIDNil
+	}
+
+	for _, id := range ids {
+		if id == uuid.Nil {
+			return nil, chats.ErrChatIDNil
+		}
+	}
+
+	return c.users.GetAvatarsForChats(ctx, ids)
+}

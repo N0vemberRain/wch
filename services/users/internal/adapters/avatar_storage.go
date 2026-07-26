@@ -27,6 +27,7 @@ func NewLocalAvatarStorage(baseDir string) (*LocalAvatarStorage, error) {
 }
 
 func (s *LocalAvatarStorage) Save(ctx context.Context, userID uuid.UUID, data []byte) (string, error) {
+	log.Println("LocalAvatarStorage.Save")
 	select {
 	case <-ctx.Done():
 		return "", ctx.Err()

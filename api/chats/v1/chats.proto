@@ -15,6 +15,12 @@ message Chat {
 	google.protobuf.Timestamp updated_at = 5; 
 }
 
+message Avatar {
+	bytes data = 1;
+	string mime_type = 2;
+    string owner_id = 3;
+}
+
 message ChatUser {
     string id = 1;
     string display_name = 2;
@@ -44,6 +50,9 @@ service ChatsService {
     rpc RemoveParticipant(RemoveParticipantRequest) returns (ParticipantResponse);
     rpc ListParticipants(ListParticipantsRequest) returns (ListParticipantsResponse);
     rpc CheckParticipant(CheckParticipantRequest) returns (CheckParticipantResponse);
+
+    rpc ListChatsForUser(ListChatsForUserRequest) returns (ListChatsForUserResponse);
+    rpc ListAvatarsForChats(ListAvatarsForChatsRequest) returns (ListAvatarsForChatsResponse);
 }
 
 message CreateChatRequest {
@@ -103,4 +112,20 @@ message CheckParticipantRequest {
 message CheckParticipantResponse {
     bool is_participant = 1;
     ChatParticipantRole role = 2;
+}
+
+message ListChatsForUserRequest {
+    string user_id = 1;
+}
+
+message ListChatsForUserResponse {
+    repeated Chat chats = 1;
+}
+
+message ListAvatarsForChatsRequest {
+    repeated string ids = 1;
+}
+
+message ListAvatarsForChatsResponse {
+    repeated Avatar avatars = 1;
 }
