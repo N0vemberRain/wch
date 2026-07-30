@@ -1,6 +1,7 @@
 package model
 
 import (
+	"errors"
 	"fmt"
 	chatspb "wch/gen/chats/v1"
 	chats "wch/services/chats/internal/domain"
@@ -44,6 +45,9 @@ func ChatToProto(c *Chat) *chatspb.Chat {
 }
 
 func ChatFromProto(c *chatspb.Chat) (*Chat, error) {
+	if c == nil {
+		return nil, errors.New("chat == nil\n")
+	}
 	t, err := ChatTypeFromString(c.Type)
 	if err != nil {
 		return nil, err

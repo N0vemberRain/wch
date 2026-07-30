@@ -2,8 +2,10 @@ package usersgrpc
 
 import (
 	"context"
+	"log"
 
 	userspb "wch/gen/users/v1"
+	"wch/pkg/auth"
 	"wch/services/chats/internal/domain/model"
 
 	"github.com/google/uuid"
@@ -24,6 +26,7 @@ func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) 
 		Id: model.IDsToString(ids),
 	}
 
+	log.Printf("UpdateAvatarForChat: %v\n", ctx.Value("user_id"))
 	resp, err := up.client.GetUsersByIDs(ctx, req)
 	if err != nil {
 		return nil, err
@@ -50,6 +53,7 @@ func (up *UserProviderGRPC) GetAvatarsForChats(ctx context.Context, ids []uuid.U
 		Ids: model.IDsToString(ids),
 	}
 
+	log.Printf("UpdateAvatarForChat: %v\n", ctx.Value("user_id"))
 	resp, err := up.client.GetAvatarsForChats(ctx, req)
 	if err != nil {
 		return nil, err
@@ -67,4 +71,23 @@ func (up *UserProviderGRPC) GetAvatarsForChats(ctx context.Context, ids []uuid.U
 	}
 
 	return avatars, nil
+}
+
+func (up *UserProviderGRPC) UpdateAvatarForChat(
+	ctx context.Context,
+	av *model.Avatar,
+) (string, error) {
+	req := &userspb.UpdateAvatarForChatRequest{
+		ChatId: av.OwnerID.String(),
+		Avatar: av.Data,
+	}
+
+	outCtx := auth.ForwardAuthContext(ctx)
+
+	resp, err := up.client.UpdateAvatarForChat(outCtx, req)
+	if err != nil {
+		return "", err
+	}
+
+	return resp.Key, nil
 }

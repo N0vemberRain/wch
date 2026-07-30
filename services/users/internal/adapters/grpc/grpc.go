@@ -249,3 +249,39 @@ func (h *Handler) GetAvatarsForChats(ctx context.Context, req *userspb.GetAvatar
 
 	return resp, nil
 }
+
+func (h *Handler) UpdateAvatarForChat(
+	ctx context.Context,
+	req *userspb.UpdateAvatarForChatRequest,
+) (*userspb.UpdateAvatarResponse, error) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is empty")
+	}
+
+	ownerID, err := uuid.Parse(req.ChatId)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	var avBytes []byte
+	if req.Avatar != nil {
+		avBytes = req.Avatar
+	} else {
+		return &userspb.UpdateAvatarResponse{}, nil
+	}
+
+	av, key, err := h.usr_ctrl.UpdateAvatarForOwner(ctx, ownerID, avBytes)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	aProto, err := model.AvatarToProto(av)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &userspb.UpdateAvatarResponse{
+		Avatar: aProto,
+		Key:    key,
+	}, nil
+}

@@ -135,3 +135,20 @@ func (c *UserController) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID
 
 	return avatars, nil
 }
+
+func (c *UserController) UpdateAvatarForOwner(
+	ctx context.Context,
+	ownerID uuid.UUID,
+	avData []byte,
+) (*model.Avatar, string, error) {
+	key, err := c.av_storage.Save(ctx, ownerID, avData)
+	if err != nil {
+		return nil, "", err
+	}
+
+	return &model.Avatar{
+		Data:     avData,
+		MimeType: "PNG",
+		OwnerID:  ownerID,
+	}, key, nil
+}

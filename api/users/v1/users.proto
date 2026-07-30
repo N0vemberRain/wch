@@ -41,6 +41,7 @@ service UsersService {
 
 	rpc GetAvatarForUser(GetAvatarRequest) returns (AvatarResponse);
 	rpc GetAvatarsForChats(GetAvatarsForChatsRequest) returns (GetAvatarsForChatsResponse);
+	rpc UpdateAvatarForChat(UpdateAvatarForChatRequest) returns (UpdateAvatarResponse);
 }
 
 message CreateUserRequest {
@@ -112,4 +113,14 @@ message GetAvatarsForChatsRequest {
 
 message GetAvatarsForChatsResponse {
 	repeated Avatar avatars = 1;
+}
+
+message UpdateAvatarForChatRequest {
+	string chat_id = 1;
+	bytes avatar = 2;
+}
+
+message UpdateAvatarResponse {
+	Avatar avatar = 1;
+	string key = 2;
 }

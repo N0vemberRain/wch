@@ -31,8 +31,27 @@ func (c *Controller) CreateChat(ctx context.Context, chat *model.Chat) error {
 	return c.repo.CreateChat(ctx, chat)
 }
 
-func (c *Controller) UpdateChat(ctx context.Context, chat *model.Chat) error {
+func (c *Controller) UpdateChat(ctx context.Context, chat *model.Chat, av_bytes []byte) error {
 	chat.UpdatedAt = time.Now()
+
+	if chat.Type == model.ChatTypeGroup {
+		if len(av_bytes) != 0 {
+			key, err := c.users.UpdateAvatarForChat(
+				ctx,
+				&model.Avatar{
+					OwnerID:  chat.ID,
+					Data:     av_bytes,
+					MimeType: "PNG",
+				},
+			)
+
+			if err != nil {
+				return err
+			}
+
+			chat.AvatarKey = key
+		}
+	}
 
 	return c.repo.UpdateChat(ctx, chat)
 }

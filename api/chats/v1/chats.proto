@@ -61,6 +61,7 @@ message CreateChatRequest {
 
 message UpdateChatRequest {
     Chat chat = 1;
+    Avatar avatar = 2;
 }
 
 message DeleteChatRequest {

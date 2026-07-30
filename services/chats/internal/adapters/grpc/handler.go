@@ -2,6 +2,7 @@ package grpc
 
 import (
 	"context"
+	"log"
 	"time"
 
 	chatspb "wch/gen/chats/v1"
@@ -106,11 +107,18 @@ func (h *Handler) UpdateChat(ctx context.Context, req *chatspb.UpdateChatRequest
 		return nil, ErrRequestIsEmpty
 	}
 
+	log.Printf("Update chat: %v\n", req.Chat)
 	chat, err := model.ChatFromProto(req.Chat)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}
-	err = h.ctrl.UpdateChat(ctx, chat)
+
+	var avatar_data []byte
+	if len(req.Avatar.Data) != 0 {
+		avatar_data = req.Avatar.Data
+	}
+
+	err = h.ctrl.UpdateChat(ctx, chat, avatar_data)
 	if err != nil {
 		return nil, status.Error(codes.InvalidArgument, err.Error())
 	}

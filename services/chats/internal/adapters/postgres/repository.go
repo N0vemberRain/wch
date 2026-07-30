@@ -94,7 +94,18 @@ func (r *ChatRepositoryPg) GetChatByName(ctx context.Context, name string) (*mod
 }
 
 func (r *ChatRepositoryPg) UpdateChat(ctx context.Context, c *model.Chat) error {
-	return ErrHasntBeenDone
+	if err := r.db.QueryRow(
+		`UPDATE chats SET
+		name = $1,
+		updated_at = $2 WHERE id = $3;`,
+		c.Name,
+		c.UpdatedAt,
+		c.ID,
+	); err.Err() != nil {
+		return err.Err()
+	}
+
+	return nil
 }
 
 func (r *ChatRepositoryPg) DeleteChat(ctx context.Context, chatID uuid.UUID) error {

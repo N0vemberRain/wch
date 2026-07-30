@@ -40,6 +40,8 @@ type Chat struct {
 	Name      string
 	CreatedAt time.Time
 	UpdatedAt time.Time
+
+	AvatarKey string
 }
 
 func NewChat(name string, t ChatType, opts ...ChatOption) *Chat {
