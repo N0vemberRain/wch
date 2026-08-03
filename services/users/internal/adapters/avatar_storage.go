@@ -26,7 +26,7 @@ func NewLocalAvatarStorage(baseDir string) (*LocalAvatarStorage, error) {
 	return &LocalAvatarStorage{baseDir: baseDir}, nil
 }
 
-func (s *LocalAvatarStorage) Save(ctx context.Context, userID uuid.UUID, data []byte) (string, error) {
+func (s *LocalAvatarStorage) Save(ctx context.Context, ownerID uuid.UUID, data []byte) (string, error) {
 	log.Println("LocalAvatarStorage.Save")
 	select {
 	case <-ctx.Done():
@@ -34,7 +34,7 @@ func (s *LocalAvatarStorage) Save(ctx context.Context, userID uuid.UUID, data []
 	default:
 	}
 
-	key := userID.String() + ".png"
+	key := ownerID.String() + ".png"
 
 	filename := filepath.Join(s.baseDir, key)
 
@@ -47,8 +47,15 @@ func (s *LocalAvatarStorage) Save(ctx context.Context, userID uuid.UUID, data []
 	return key, nil
 }
 
-func (s *LocalAvatarStorage) Get(ctx context.Context, key string) ([]byte, error) {
+func (s *LocalAvatarStorage) GetByKey(ctx context.Context, key string) ([]byte, error) {
 	filename := filepath.Join(s.baseDir, key)
+	log.Printf("Trying to get an avatar: %s\n", filename)
+	return os.ReadFile(filename)
+}
+
+func (s *LocalAvatarStorage) GetByOwnerID(ctx context.Context, ownerID uuid.UUID) ([]byte, error) {
+	filename := filepath.Join(s.baseDir, ownerID.String()+".png")
+	log.Printf("Trying to get an avatar: %s\n", filename)
 	return os.ReadFile(filename)
 }
 

@@ -23,12 +23,63 @@ func NewChatController(repo ports.Repository, users ports.UserProvider) *Control
 	}
 }
 
-func (c *Controller) CreateChat(ctx context.Context, chat *model.Chat) error {
+func (c *Controller) CreateGroupChat(ctx context.Context, chat *model.Chat, av *model.Avatar) error {
 	chat.ID = uuid.New()
 	chat.CreatedAt = time.Now()
 	chat.UpdatedAt = chat.CreatedAt
 
-	return c.repo.CreateChat(ctx, chat)
+	err := c.repo.CreateChat(ctx, chat)
+	if err != nil {
+		return err
+	}
+
+	if av == nil || len(av.Data) == 0 {
+		return nil
+	}
+
+	av.OwnerID = chat.ID
+	key, err := c.users.UpdateAvatarForChat(ctx, av)
+	if err != nil {
+		return err
+	}
+
+	chat.AvatarKey = key
+	c.repo.UpdateChat(ctx, chat)
+
+	return nil
+}
+
+func (c *Controller) CreateDirectChat(
+	ctx context.Context,
+	chat *model.Chat,
+	userID uuid.UUID,
+) error {
+	chat.ID = uuid.New()
+	chat.CreatedAt = time.Now()
+	chat.UpdatedAt = chat.CreatedAt
+
+	err := c.repo.CreateChat(ctx, chat)
+	if err != nil {
+		return err
+	}
+
+	err = c.AddParticipant(ctx, chat.ID, &model.ChatParticipant{
+		ChatID: chat.ID,
+		UserID: userID,
+		Role:   model.ChatParticipantAdmin,
+	})
+	if err != nil {
+		return nil
+	}
+	id, ok := ctx.Value("user_id").(string)
+	if !ok {
+		return chats.ErrUserID
+	}
+	return c.AddParticipant(ctx, chat.ID, &model.ChatParticipant{
+		ChatID: chat.ID,
+		UserID: uuid.MustParse(id),
+		Role:   model.ChatParticipantAdmin,
+	})
 }
 
 func (c *Controller) UpdateChat(ctx context.Context, chat *model.Chat, av_bytes []byte) error {

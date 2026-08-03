@@ -111,7 +111,7 @@ func (c *UserController) GetAvatarForUser(ctx context.Context, user_id string) (
 		return nil, err
 	}
 
-	return c.av_storage.Get(ctx, u.AvatarURL)
+	return c.av_storage.GetByKey(ctx, u.AvatarURL)
 }
 
 func (c *UserController) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID) (
@@ -120,7 +120,7 @@ func (c *UserController) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID
 ) {
 	var avatars []model.Avatar
 	for _, id := range ids {
-		bytes, err := c.av_storage.Get(ctx, id.String())
+		bytes, err := c.av_storage.GetByOwnerID(ctx, id)
 		if err != nil {
 			break
 		}
@@ -133,6 +133,7 @@ func (c *UserController) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID
 		avatars = append(avatars, a)
 	}
 
+	log.Printf("UserController.GetAvatarsForChats: %d avatars have been got\n", len(avatars))
 	return avatars, nil
 }
 
@@ -146,6 +147,7 @@ func (c *UserController) UpdateAvatarForOwner(
 		return nil, "", err
 	}
 
+	log.Printf("UserController.UpdateAvatarForOwner: avatar %s has been saved\n", key)
 	return &model.Avatar{
 		Data:     avData,
 		MimeType: "PNG",

@@ -40,7 +40,8 @@ message ChatParticipant {
 }
 
 service ChatsService {
-    rpc CreateChat(CreateChatRequest) returns (ChatResponse);
+    rpc CreateGroupChat(CreateGroupChatRequest) returns (ChatResponse);
+    rpc CreateDirectChat(CreateDirectChatRequest) returns (ChatResponse);
     rpc GetChatByID(GetChatByIDRequest) returns (GetChatResponse);
     rpc GetChatByName(GetChatByNameRequest) returns (GetChatResponse);
     rpc UpdateChat(UpdateChatRequest) returns (ChatResponse);
@@ -55,8 +56,14 @@ service ChatsService {
     rpc ListAvatarsForChats(ListAvatarsForChatsRequest) returns (ListAvatarsForChatsResponse);
 }
 
-message CreateChatRequest {
-    Chat chat = 1;
+message CreateGroupChatRequest {
+    string name = 1;
+    string about = 2;
+    Avatar avatar = 3;
+}
+
+message CreateDirectChatRequest {
+    string user_id = 1;
 }
 
 message UpdateChatRequest {

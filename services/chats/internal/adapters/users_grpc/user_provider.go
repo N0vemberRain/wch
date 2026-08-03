@@ -26,8 +26,9 @@ func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) 
 		Id: model.IDsToString(ids),
 	}
 
-	log.Printf("UpdateAvatarForChat: %v\n", ctx.Value("user_id"))
-	resp, err := up.client.GetUsersByIDs(ctx, req)
+	outCtx := auth.ForwardAuthContext(ctx)
+	log.Printf("GetUsersByIDs: %v\n", ctx.Value("user_id"))
+	resp, err := up.client.GetUsersByIDs(outCtx, req)
 	if err != nil {
 		return nil, err
 	}
@@ -53,14 +54,15 @@ func (up *UserProviderGRPC) GetAvatarsForChats(ctx context.Context, ids []uuid.U
 		Ids: model.IDsToString(ids),
 	}
 
-	log.Printf("UpdateAvatarForChat: %v\n", ctx.Value("user_id"))
-	resp, err := up.client.GetAvatarsForChats(ctx, req)
+	outCtx := auth.ForwardAuthContext(ctx)
+	log.Printf("GetAvatarsForChats: %v\n", ctx.Value("user_id"))
+	resp, err := up.client.GetAvatarsForChats(outCtx, req)
 	if err != nil {
 		return nil, err
 	}
 
 	avatars := make([]model.Avatar, 0)
-	for _, aProto := range resp.Avatars {
+	for i, aProto := range resp.Avatars {
 		a := model.Avatar{
 			Data:     aProto.Data,
 			MimeType: aProto.MimeType,
@@ -68,6 +70,7 @@ func (up *UserProviderGRPC) GetAvatarsForChats(ctx context.Context, ids []uuid.U
 		}
 
 		avatars = append(avatars, a)
+		log.Printf("Avatar %d for chat %s\n", i, a.OwnerID)
 	}
 
 	return avatars, nil

@@ -28,7 +28,7 @@ func NewHandler(ctrl *controller.Controller) *Handler {
 	}
 }
 
-func (h *Handler) CreateChat(ctx context.Context, req *chatspb.CreateChatRequest) (
+func (h *Handler) CreateGroupChat(ctx context.Context, req *chatspb.CreateGroupChatRequest) (
 	*chatspb.ChatResponse,
 	error,
 ) {
@@ -36,16 +36,46 @@ func (h *Handler) CreateChat(ctx context.Context, req *chatspb.CreateChatRequest
 		return nil, ErrRequestIsEmpty
 	}
 
-	t, err := model.ChatTypeFromString(req.Chat.Type)
-	if err != nil {
-		return nil, status.Error(codes.InvalidArgument, chats.ErrChatType.Error())
-	}
-	if t != model.ChatTypeDirect && req.Chat.Name == "" {
+	// t, err := model.ChatTypeFromString(req.Chat.Type)
+	// if err != nil {
+	// 	return nil, status.Error(codes.InvalidArgument, chats.ErrChatType.Error())
+	// }
+	// if t != model.ChatTypeDirect && req.Chat.Name == "" {
+	// 	return nil, status.Error(codes.InvalidArgument, chats.ErrChatNameIsEmpty.Error())
+	// }
+
+	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, chats.ErrChatNameIsEmpty.Error())
 	}
 
-	chat := model.NewChat(req.Chat.Name, t)
-	err = h.ctrl.CreateChat(ctx, chat)
+	chat := model.NewChat(req.Name, model.ChatTypeGroup)
+	av := &model.Avatar{}
+	if req.Avatar != nil {
+		av.Data = req.Avatar.Data
+		av.MimeType = req.Avatar.MimeType
+	}
+	err := h.ctrl.CreateGroupChat(ctx, chat, av)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	return &chatspb.ChatResponse{}, nil
+}
+
+func (h *Handler) CreateDirectChat(
+	ctx context.Context,
+	req *chatspb.CreateDirectChatRequest,
+) (*chatspb.ChatResponse, error) {
+	if req == nil {
+		return nil, ErrRequestIsEmpty
+	}
+
+	if req.UserId == "" {
+		return nil, status.Error(codes.InvalidArgument, chats.ErrUserID.Error())
+	}
+
+	chat := &model.Chat{}
+	err := h.ctrl.CreateDirectChat(ctx, chat, uuid.MustParse(req.UserId))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

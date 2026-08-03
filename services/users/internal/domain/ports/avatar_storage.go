@@ -9,5 +9,6 @@ import (
 type AvatarStorage interface {
 	Save(ctx context.Context, userID uuid.UUID, data []byte) (string, error)
 	Delete(ctx context.Context, key string) error
-	Get(ctx context.Context, key string) ([]byte, error)
+	GetByOwnerID(ctx context.Context, ownerID uuid.UUID) ([]byte, error)
+	GetByKey(ctx context.Context, key string) ([]byte, error)
 }
