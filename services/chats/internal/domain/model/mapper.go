@@ -86,24 +86,24 @@ func UserToProto(u *User) *chatspb.ChatUser {
 func ChatParticipantRoleToString(role ChatParticipantRole) string {
 	switch role {
 	case ChatParticipantAdmin:
-		return "Admin"
+		return "admin"
 	case ChatParticipantMember:
-		return "Member"
+		return "member"
 	case ChatParticipantOwner:
-		return "Admin"
+		return "admin"
 
 	default:
-		return "Unknown"
+		return "unknown"
 	}
 }
 
 func ChatParticipantRoleFromString(role string) ChatParticipantRole {
 	switch role {
-	case "Admin":
+	case "admin":
 		return ChatParticipantAdmin
-	case "Member":
+	case "member":
 		return ChatParticipantMember
-	case "Owner":
+	case "owner":
 		return ChatParticipantOwner
 	default:
 		return ChatParticipantUnknown

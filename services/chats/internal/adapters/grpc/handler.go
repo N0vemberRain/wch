@@ -49,17 +49,20 @@ func (h *Handler) CreateGroupChat(ctx context.Context, req *chatspb.CreateGroupC
 	}
 
 	chat := model.NewChat(req.Name, model.ChatTypeGroup)
+	log.Printf("Chat: %v\t", chat)
 	av := &model.Avatar{}
 	if req.Avatar != nil {
 		av.Data = req.Avatar.Data
 		av.MimeType = req.Avatar.MimeType
 	}
-	err := h.ctrl.CreateGroupChat(ctx, chat, av)
+	chat, err := h.ctrl.CreateGroupChat(ctx, chat, av)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &chatspb.ChatResponse{}, nil
+	return &chatspb.ChatResponse{
+		Chat: model.ChatToProto(chat),
+	}, nil
 }
 
 func (h *Handler) CreateDirectChat(
@@ -74,13 +77,16 @@ func (h *Handler) CreateDirectChat(
 		return nil, status.Error(codes.InvalidArgument, chats.ErrUserID.Error())
 	}
 
-	chat := &model.Chat{}
-	err := h.ctrl.CreateDirectChat(ctx, chat, uuid.MustParse(req.UserId))
+	chat := &model.Chat{Type: model.ChatTypeDirect}
+	log.Printf("Chat: %v\t", chat)
+	chat, err := h.ctrl.CreateDirectChat(ctx, chat, uuid.MustParse(req.UserId))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
 
-	return &chatspb.ChatResponse{}, nil
+	return &chatspb.ChatResponse{
+		Chat: model.ChatToProto(chat),
+	}, nil
 }
 
 func (h *Handler) GetChatByID(ctx context.Context, req *chatspb.GetChatByIDRequest) (

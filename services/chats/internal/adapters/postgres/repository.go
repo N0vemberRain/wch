@@ -28,7 +28,7 @@ func (r *ChatRepositoryPg) CreateChat(ctx context.Context, c *model.Chat) error 
 		$1, $2, $3, $4, $5
 		)`,
 		c.ID,
-		c.Type,
+		model.ChatTypeToString(c.Type),
 		c.Name,
 		c.CreatedAt,
 		c.UpdatedAt,
@@ -116,13 +116,13 @@ func (r *ChatRepositoryPg) AddParticipant(
 	ctx context.Context, chatID uuid.UUID, p *model.ChatParticipant,
 ) error {
 	err := r.db.QueryRow(
-		`INSERT INTO chat_participants (chat_id, user_id, role, joined_at) VALUES ($1, $2, $3, $4);`,
-		p.ChatID.String(),
-		p.UserID.String(),
+		`INSERT INTO chat_participants (chat_id, user_id, role) VALUES ($1, $2, $3);`,
+		p.ChatID,
+		p.UserID,
 		model.ChatParticipantRoleToString(p.Role),
-		p.JoinedAt,
 	).Err()
 	if err != nil {
+		log.Printf("not ok")
 		return err
 	}
 

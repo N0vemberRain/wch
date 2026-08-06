@@ -88,6 +88,7 @@ message GetChatResponse {
 }
 
 message ChatResponse {
+    Chat chat = 1;
 }
 
 message AddParticipantRequest {
