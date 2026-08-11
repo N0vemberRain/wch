@@ -14,6 +14,6 @@ type UserRepository interface {
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 	UpdateUser(ctx context.Context, u *model.User) error
 	DeleteUser(ctx context.Context, id string) error
-	SearchUsers(ctx context.Context, filter model.SearchFilter) ([]*model.User, error)
+	SearchUsers(ctx context.Context, filter model.SearchFilter) ([]model.UserSummary, error)
 	GetAll(ctx context.Context) ([]*model.User, error)
 }

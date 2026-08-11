@@ -40,3 +40,10 @@ type Avatar struct {
 	MimeType string
 	OwnerID  uuid.UUID
 }
+
+// Only to show in users search window
+type UserSummary struct {
+	ID    uuid.UUID
+	Name  string
+	Email string
+}

@@ -169,7 +169,11 @@ func (h *Handler) SearchUsers(ctx context.Context, req *userspb.SearchUsersReque
 
 	resp := &userspb.SearchUsersResponse{}
 	for _, u := range usersList {
-		resp.Users = append(resp.Users, model.UserToProto(u))
+		resp.Users = append(resp.Users, &userspb.UserSummary{
+			Id:    u.ID.String(),
+			Name:  u.Name,
+			Email: u.Email,
+		})
 	}
 
 	return resp, nil
@@ -216,6 +220,41 @@ func (h *Handler) GetAvatarForUser(ctx context.Context, req *userspb.GetAvatarRe
 	}, nil
 }
 
+func (h *Handler) GetAvatarsForUsers(ctx context.Context, req *userspb.GetAvatarsForUsersRequest) (
+	*userspb.GetAvatarsForUsersResponse,
+	error,
+) {
+	if req == nil {
+		return nil, status.Error(codes.InvalidArgument, "request is empty")
+	}
+
+	var ids []uuid.UUID
+	for _, id_str := range req.Ids {
+		id, err := uuid.Parse(id_str)
+		if err != nil {
+			return nil, domain.ErrInvalidUserData
+		}
+		ids = append(ids, id)
+	}
+
+	avatars, err := h.usr_ctrl.GetAvatarsForOwners(ctx, ids)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+
+	resp := &userspb.GetAvatarsForUsersResponse{}
+	for _, a := range avatars {
+		aProto, err := model.AvatarToProto(&a)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		resp.Avatars = append(resp.Avatars, aProto)
+	}
+
+	return resp, nil
+
+}
+
 func (h *Handler) GetAvatarsForChats(ctx context.Context, req *userspb.GetAvatarsForChatsRequest) (
 	*userspb.GetAvatarsForChatsResponse,
 	error,
@@ -233,7 +272,7 @@ func (h *Handler) GetAvatarsForChats(ctx context.Context, req *userspb.GetAvatar
 		ids = append(ids, id)
 	}
 
-	avatars, err := h.usr_ctrl.GetAvatarsForChats(ctx, ids)
+	avatars, err := h.usr_ctrl.GetAvatarsForOwners(ctx, ids)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}

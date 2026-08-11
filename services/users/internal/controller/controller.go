@@ -96,7 +96,7 @@ func (c *UserController) GetByEmail(ctx context.Context, email string) (*model.U
 }
 
 func (c *UserController) SearchUsers(ctx context.Context, filter model.SearchFilter) (
-	[]*model.User, error,
+	[]model.UserSummary, error,
 ) {
 	return c.repo.SearchUsers(ctx, filter)
 }
@@ -114,7 +114,7 @@ func (c *UserController) GetAvatarForUser(ctx context.Context, user_id string) (
 	return c.av_storage.GetByKey(ctx, u.AvatarURL)
 }
 
-func (c *UserController) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID) (
+func (c *UserController) GetAvatarsForOwners(ctx context.Context, ids []uuid.UUID) (
 	[]model.Avatar,
 	error,
 ) {
@@ -133,7 +133,6 @@ func (c *UserController) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID
 		avatars = append(avatars, a)
 	}
 
-	log.Printf("UserController.GetAvatarsForChats: %d avatars have been got\n", len(avatars))
 	return avatars, nil
 }
 

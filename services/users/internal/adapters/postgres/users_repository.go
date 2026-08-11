@@ -152,13 +152,10 @@ func (r *UserRepositoryPg) DeleteUser(ctx context.Context, id string) error {
 }
 
 func (r *UserRepositoryPg) SearchUsers(ctx context.Context, filter model.SearchFilter) (
-	[]*model.User,
+	[]model.UserSummary,
 	error,
 ) {
-	query := `SELECT id, username, email, 
-		first_name, last_name, surname, avatar_url, 
-		department_id
-		FROM users WHERE `
+	query := `SELECT id, username, email FROM users WHERE `
 	i := 0
 	args := []interface{}{}
 	if filter.Email != "" {
@@ -195,22 +192,17 @@ func (r *UserRepositoryPg) SearchUsers(ctx context.Context, filter model.SearchF
 	}
 	defer rows.Close()
 
-	var usersList []*model.User
+	var usersList []model.UserSummary
 	for rows.Next() {
-		var u model.User
+		var u model.UserSummary
 		if err := rows.Scan(
 			&u.ID,
-			&u.Username,
+			&u.Name,
 			&u.Email,
-			&u.FirstName,
-			&u.LastName,
-			&u.Surname,
-			&u.AvatarURL,
-			&u.DepartmentID,
 		); err != nil {
 			return nil, err
 		}
-		usersList = append(usersList, &u)
+		usersList = append(usersList, u)
 	}
 
 	return usersList, nil

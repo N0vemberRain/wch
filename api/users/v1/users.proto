@@ -20,6 +20,12 @@ message User {
 	google.protobuf.Timestamp updated_at = 13; 
 }
 
+message UserSummary {
+	string id = 1;
+	string name = 2;
+	string email = 3;
+}
+
 message Avatar {
 	bytes data = 1;
 	string mime_type = 2;
@@ -40,6 +46,7 @@ service UsersService {
 	rpc ListUsers(ListUsersRequest) returns (ListUsersResponse);
 
 	rpc GetAvatarForUser(GetAvatarRequest) returns (AvatarResponse);
+	rpc GetAvatarsForUsers(GetAvatarsForUsersRequest) returns (GetAvatarsForUsersResponse);
 	rpc GetAvatarsForChats(GetAvatarsForChatsRequest) returns (GetAvatarsForChatsResponse);
 	rpc UpdateAvatarForChat(UpdateAvatarForChatRequest) returns (UpdateAvatarResponse);
 }
@@ -95,7 +102,7 @@ message SearchUsersRequest {
 }
 
 message SearchUsersResponse {
-	repeated User users = 1;
+	repeated UserSummary users = 1;
 }
 
 message GetAvatarRequest {
@@ -123,4 +130,12 @@ message UpdateAvatarForChatRequest {
 message UpdateAvatarResponse {
 	Avatar avatar = 1;
 	string key = 2;
+}
+
+message GetAvatarsForUsersRequest {
+	repeated string ids = 1;
+}
+
+message GetAvatarsForUsersResponse {
+	repeated Avatar avatars = 1;
 }
