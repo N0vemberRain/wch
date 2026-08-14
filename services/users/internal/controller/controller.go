@@ -122,7 +122,7 @@ func (c *UserController) GetAvatarsForOwners(ctx context.Context, ids []uuid.UUI
 	for _, id := range ids {
 		bytes, err := c.av_storage.GetByOwnerID(ctx, id)
 		if err != nil {
-			break
+			continue
 		}
 
 		var a model.Avatar

@@ -21,6 +21,11 @@ message Avatar {
     string owner_id = 3;
 }
 
+message ChatSummary {
+    string id = 1;
+    bool is_direct = 2;
+}
+
 message ChatUser {
     string id = 1;
     string display_name = 2;
@@ -89,6 +94,7 @@ message GetChatResponse {
 
 message ChatResponse {
     Chat chat = 1;
+    Avatar avatar = 2; // optional
 }
 
 message AddParticipantRequest {
@@ -132,7 +138,7 @@ message ListChatsForUserResponse {
 }
 
 message ListAvatarsForChatsRequest {
-    repeated string ids = 1;
+    repeated ChatSummary chats = 1;
 }
 
 message ListAvatarsForChatsResponse {

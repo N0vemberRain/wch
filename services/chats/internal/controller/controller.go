@@ -2,7 +2,10 @@ package controller
 
 import (
 	"context"
+	"database/sql"
+	"errors"
 	"log"
+	"slices"
 	"time"
 
 	chats "wch/services/chats/internal/domain"
@@ -76,38 +79,62 @@ func (c *Controller) CreateDirectChat(
 	ctx context.Context,
 	chat *model.Chat,
 	userID uuid.UUID,
-) (*model.Chat, error) {
+) (*model.Chat, *model.Avatar, error) {
+	// check if the user exists
+	user, err := c.users.GetUserByID(ctx, userID)
+	if err != nil {
+		return nil, nil, err
+	}
+
 	chat.ID = uuid.New()
 	chat.CreatedAt = time.Now()
 	chat.UpdatedAt = chat.CreatedAt
+	chat.AvatarKey = user.ID.String()
 
-	err := c.repo.CreateChat(ctx, chat)
+	err = c.repo.CreateChat(ctx, chat)
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 
+	// add to participants who we are writing
 	err = c.AddParticipant(ctx, chat.ID, &model.ChatParticipant{
 		ChatID: chat.ID,
 		UserID: userID,
 		Role:   model.ChatParticipantAdmin,
 	})
 	if err != nil {
-		return nil, err
+		return nil, nil, err
 	}
 	id, ok := ctx.Value("user_id").(uuid.UUID)
 	if !ok {
-		return nil, chats.ErrUserID
+		log.Printf("Current user: %v\n", id)
+		return nil, nil, chats.ErrUserID
 	}
+
+	// add to articipants ourself
 	err = c.AddParticipant(ctx, chat.ID, &model.ChatParticipant{
 		ChatID: chat.ID,
 		UserID: id,
 		Role:   model.ChatParticipantAdmin,
 	})
 	if !ok {
-		return nil, chats.ErrUserID
+		return nil, nil, chats.ErrUserID
 	}
 
-	return chat, err
+	// direct chat doesn't have name in db, it gets the name only when it returns to a user
+	chat.Name = user.Username
+	// get an avatar
+	av, err := c.users.GetAvatarForDirectChatByKey(ctx, chat.AvatarKey)
+	if err != nil {
+		if errors.Is(err, sql.ErrNoRows) {
+			log.Printf("Avatar for user %s not found. New chat will have no avatar", userID.String())
+			return chat, nil, nil
+		} else {
+			log.Printf("Get Avatar Error: %v\n", err)
+			return chat, nil, nil
+		}
+	}
+	return chat, av, err
 }
 
 func (c *Controller) UpdateChat(ctx context.Context, chat *model.Chat, av_bytes []byte) error {
@@ -135,12 +162,69 @@ func (c *Controller) UpdateChat(ctx context.Context, chat *model.Chat, av_bytes 
 	return c.repo.UpdateChat(ctx, chat)
 }
 
-func (c *Controller) GetChatByID(ctx context.Context, chatID uuid.UUID) (*model.Chat, error) {
+// Если чат - диалог, берем из БД его участников и
+// присваиваем имя того участника, которые не является пользователем,
+// например, зашли под игорем - имя чата маша, зашли под машей - имя чата игорь
+func (c *Controller) getNameToDirectChat(ctx context.Context, chat *model.Chat) (
+	string,
+	error,
+) {
+	if chat.Type != model.ChatTypeDirect {
+		panic("chat must be direct")
+	}
+
+	users, err := c.repo.GetParticipantsIDs(ctx, chat.ID)
+	if err != nil {
+		return "", err
+	}
+
+	log.Printf("Participants for chat %v: %v\n", chat.ID, users)
+	if len(users) != 2 {
+		panic("len(users) != 2")
+	}
+
+	loggedUser := ctx.Value("user_id").(uuid.UUID)
+	log.Printf("LOGGED USER %s\n", loggedUser.String())
+	if users[0] == ctx.Value("user_id").(uuid.UUID) {
+		usr, err := c.users.GetUserByID(ctx, users[1])
+		if err != nil {
+			return "", err
+		}
+
+		return usr.Username, nil
+	} else if users[1] == ctx.Value("user_id").(uuid.UUID) {
+		usr, err := c.users.GetUserByID(ctx, users[0])
+		if err != nil {
+			return "", err
+		}
+
+		return usr.Username, nil
+	} else {
+		panic("one of direct chat participants must be a logged user")
+	}
+}
+
+func (c *Controller) GetChatByID(ctx context.Context, chatID uuid.UUID) (
+	*model.Chat,
+	error,
+) {
 	if chatID == uuid.Nil {
 		return nil, chats.ErrUserIDNil
 	}
 
-	return c.repo.GetChatByID(ctx, chatID)
+	chat, err := c.repo.GetChatByID(ctx, chatID)
+	if err != nil {
+		return nil, err
+	}
+
+	if chat.Type == model.ChatTypeDirect {
+		chat.Name, err = c.getNameToDirectChat(ctx, chat)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return chat, nil
 }
 
 func (c *Controller) GetChatByName(ctx context.Context, name string) (*model.Chat, error) {
@@ -224,10 +308,26 @@ func (c *Controller) ListChatsForUser(ctx context.Context, userID uuid.UUID) (
 		return nil, chats.ErrUserIDNil
 	}
 
-	return c.repo.GetChatsForUser(ctx, userID)
+	chats, err := c.repo.GetChatsForUser(ctx, userID)
+	if err != nil {
+		return nil, err
+	}
+
+	for i, chat := range chats {
+		if chat.Type != model.ChatTypeDirect {
+			continue
+		}
+
+		chats[i].Name, err = c.getNameToDirectChat(ctx, &chat)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return chats, nil
 }
 
-func (c *Controller) ListAvatarsForChats(ctx context.Context, ids []uuid.UUID) (
+func (c *Controller) ListAvatarsForGroupChats(ctx context.Context, ids []uuid.UUID) (
 	[]model.Avatar,
 	error,
 ) {
@@ -235,11 +335,78 @@ func (c *Controller) ListAvatarsForChats(ctx context.Context, ids []uuid.UUID) (
 		return nil, chats.ErrChatIDNil
 	}
 
-	for _, id := range ids {
-		if id == uuid.Nil {
-			return nil, chats.ErrChatIDNil
-		}
+	if slices.Contains(ids, uuid.Nil) {
+		return nil, chats.ErrChatIDNil
 	}
 
 	return c.users.GetAvatarsForChats(ctx, ids)
+}
+
+func (c *Controller) ListAvatarsForDirectChats(ctx context.Context, ids []uuid.UUID) (
+	[]model.Avatar,
+	error,
+) {
+	if len(ids) == 0 {
+		return nil, chats.ErrChatIDNil
+	}
+
+	if slices.Contains(ids, uuid.Nil) {
+		return nil, chats.ErrChatIDNil
+	}
+
+	// Получаем id пользователей,
+	// с которыми имеется переписка у текущего пользователя
+	recievAndChat := make(map[uuid.UUID]uuid.UUID)
+	var recieversIDs []uuid.UUID
+	for _, chatID := range ids {
+		id, err := c.getRecieverIDForDirectChat(ctx, chatID)
+		if err != nil {
+			return nil, err
+		}
+
+		recieversIDs = append(recieversIDs, id)
+		recievAndChat[id] = chatID
+	}
+
+	// возвращаем аватары для пользователей-приемников сообщений
+	avs, err := c.users.GetAvatarsForChats(ctx, recieversIDs)
+	if err != nil {
+		return nil, err
+	}
+	// заменяем owner id, который был равен user_id, на chat_id
+	for i := range avs {
+		avs[i].OwnerID = recievAndChat[avs[i].OwnerID]
+	}
+
+	return avs, nil
+}
+
+// Получаем id пользователей,
+// с которыми имеется переписка у текущего пользователя
+func (c *Controller) getRecieverIDForDirectChat(ctx context.Context, chatID uuid.UUID) (
+	uuid.UUID,
+	error,
+) {
+	users, err := c.repo.GetParticipantsIDs(ctx, chatID)
+	if err != nil {
+		return uuid.Nil, err
+	}
+
+	log.Printf("Participants for chat %v: %v\n", chatID, users)
+	if len(users) != 2 {
+		panic(len(users) != 2)
+	}
+
+	loggedUserID := ctx.Value("user_id").(uuid.UUID)
+	log.Printf("LOGGED USER %s\n", loggedUserID.String())
+	var recieverID uuid.UUID
+	if users[0] == ctx.Value("user_id").(uuid.UUID) {
+		recieverID = users[1]
+	} else if users[1] == ctx.Value("user_id").(uuid.UUID) {
+		recieverID = users[0]
+	} else {
+		panic("one of direct chat participants must be logged user")
+	}
+
+	return recieverID, nil
 }

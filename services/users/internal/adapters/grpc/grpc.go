@@ -215,6 +215,7 @@ func (h *Handler) GetAvatarForUser(ctx context.Context, req *userspb.GetAvatarRe
 		Avatar: &userspb.Avatar{
 			MimeType: "PNG",
 			Data:     av_bytes,
+			OwnerId:  req.UserId,
 		},
 		UserId: req.UserId,
 	}, nil

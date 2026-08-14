@@ -36,14 +36,6 @@ func (h *Handler) CreateGroupChat(ctx context.Context, req *chatspb.CreateGroupC
 		return nil, ErrRequestIsEmpty
 	}
 
-	// t, err := model.ChatTypeFromString(req.Chat.Type)
-	// if err != nil {
-	// 	return nil, status.Error(codes.InvalidArgument, chats.ErrChatType.Error())
-	// }
-	// if t != model.ChatTypeDirect && req.Chat.Name == "" {
-	// 	return nil, status.Error(codes.InvalidArgument, chats.ErrChatNameIsEmpty.Error())
-	// }
-
 	if req.Name == "" {
 		return nil, status.Error(codes.InvalidArgument, chats.ErrChatNameIsEmpty.Error())
 	}
@@ -79,14 +71,23 @@ func (h *Handler) CreateDirectChat(
 
 	chat := &model.Chat{Type: model.ChatTypeDirect}
 	log.Printf("Chat: %v\t", chat)
-	chat, err := h.ctrl.CreateDirectChat(ctx, chat, uuid.MustParse(req.UserId))
+	chat, av, err := h.ctrl.CreateDirectChat(ctx, chat, uuid.MustParse(req.UserId))
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	avProto, err := model.AvatarToProto(av)
+	if err != nil {
+		log.Printf("Handler:CreateDirectChat: %v", err)
+		return &chatspb.ChatResponse{
+			Chat: model.ChatToProto(chat),
+		}, nil
 
-	return &chatspb.ChatResponse{
-		Chat: model.ChatToProto(chat),
-	}, nil
+	} else {
+		return &chatspb.ChatResponse{
+			Chat:   model.ChatToProto(chat),
+			Avatar: avProto,
+		}, nil
+	}
 }
 
 func (h *Handler) GetChatByID(ctx context.Context, req *chatspb.GetChatByIDRequest) (
@@ -341,21 +342,35 @@ func (h *Handler) ListAvatarsForChats(ctx context.Context, req *chatspb.ListAvat
 		return nil, ErrRequestIsEmpty
 	}
 
-	var ids []uuid.UUID
-	for _, id_str := range req.Ids {
-		id, err := uuid.Parse(id_str)
+	var group_ids []uuid.UUID
+	var direct_ids []uuid.UUID
+	for _, chatSummary := range req.Chats {
+		id, err := uuid.Parse(chatSummary.Id)
 		if err != nil {
 			return nil, status.Error(codes.InvalidArgument, err.Error())
 		}
 
-		ids = append(ids, id)
+		if chatSummary.IsDirect {
+			direct_ids = append(direct_ids, id)
+		} else {
+			group_ids = append(group_ids, id)
+		}
 	}
 
-	avatars, err := h.ctrl.ListAvatarsForChats(ctx, ids)
+	group_chats_avs, err := h.ctrl.ListAvatarsForGroupChats(ctx, group_ids)
 	if err != nil {
 		return nil, status.Error(codes.Internal, err.Error())
 	}
+	log.Printf("group chats len: %v\n", len(group_chats_avs))
 
+	direct_chats_avs, err := h.ctrl.ListAvatarsForDirectChats(ctx, direct_ids)
+	if err != nil {
+		return nil, status.Error(codes.Internal, err.Error())
+	}
+	log.Printf("direct chats len: %v\n", len(direct_chats_avs))
+
+	avatars := append(group_chats_avs, direct_chats_avs...)
+	log.Printf("all chats len: %v\n", len(avatars))
 	resp := &chatspb.ListAvatarsForChatsResponse{}
 	for _, a := range avatars {
 		aProto, err := model.AvatarToProto(&a)

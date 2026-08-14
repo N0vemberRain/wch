@@ -21,6 +21,28 @@ func NewUserProvider(client userspb.UsersServiceClient) *UserProviderGRPC {
 	}
 }
 
+func (up *UserProviderGRPC) GetUserByID(ctx context.Context, id uuid.UUID) (
+	*model.User,
+	error,
+) {
+	req := &userspb.GetUserByIDRequest{
+		UserId: id.String(),
+	}
+
+	outCtx := auth.ForwardAuthContext(ctx)
+	resp, err := up.client.GetUserByID(outCtx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	return &model.User{
+		ID:        uuid.MustParse(resp.User.Id),
+		Username:  resp.User.Username,
+		AvatarURL: resp.User.AvatarUrl,
+		Status:    resp.User.Status,
+	}, nil
+}
+
 func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) ([]model.User, error) {
 	req := &userspb.GetUsersByIDsRequest{
 		Id: model.IDsToString(ids),
@@ -44,6 +66,35 @@ func (up *UserProviderGRPC) GetUsersByIDs(ctx context.Context, ids []uuid.UUID) 
 	}
 
 	return users, nil
+}
+
+func (up *UserProviderGRPC) GetAvatarForDirectChatByKey(ctx context.Context, key string) (
+	*model.Avatar,
+	error,
+) {
+	// in direct chats key is a user'd id
+	id, err := uuid.Parse(key)
+	if err != nil {
+		return nil, err
+	}
+	req := &userspb.GetAvatarRequest{
+		UserId: id.String(),
+	}
+	outCtx := auth.ForwardAuthContext(ctx)
+	resp, err := up.client.GetAvatarForUser(outCtx, req)
+	if err != nil {
+		return nil, err
+	}
+
+	// ownerId, err := uuid.Parse(resp.Avatar.OwnerId)
+	// if err != nil {
+	// 	return nil, err
+	// }
+	return &model.Avatar{
+		Data:     resp.Avatar.Data,
+		MimeType: resp.Avatar.MimeType,
+		OwnerID:  id,
+	}, nil
 }
 
 func (up *UserProviderGRPC) GetAvatarsForChats(ctx context.Context, ids []uuid.UUID) (

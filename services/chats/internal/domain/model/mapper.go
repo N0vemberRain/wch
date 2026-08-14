@@ -111,6 +111,9 @@ func ChatParticipantRoleFromString(role string) ChatParticipantRole {
 }
 
 func AvatarToProto(a *Avatar) (*chatspb.Avatar, error) {
+	if a == nil {
+		return nil, errors.New("avatar is nil")
+	}
 	return &chatspb.Avatar{
 		Data:     a.Data,
 		MimeType: a.MimeType,
