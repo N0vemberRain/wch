@@ -83,6 +83,24 @@ func UserToProto(u *User) *chatspb.ChatUser {
 	}
 }
 
+func ChatParticipantToProto(p *ChatParticipant) (*chatspb.ChatParticipant, error) {
+	if p == nil {
+		return nil, errors.New("ChatParticipantToProto: ChatParticipant is nil")
+	}
+
+	return &chatspb.ChatParticipant{
+		UserId: p.UserID.String(),
+		ChatId: p.ChatID.String(),
+		Name:   p.Name,
+		Role:   chatspb.ChatParticipantRole(p.Role),
+		Avatar: &chatspb.Avatar{
+			Data:     p.Avatar.Data,
+			MimeType: p.Avatar.MimeType,
+			OwnerId:  p.Avatar.OwnerID.String(),
+		},
+	}, nil
+}
+
 func ChatParticipantRoleToString(role ChatParticipantRole) string {
 	switch role {
 	case ChatParticipantAdmin:

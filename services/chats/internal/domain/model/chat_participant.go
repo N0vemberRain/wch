@@ -20,8 +20,11 @@ const (
 type ChatParticipant struct {
 	UserID   uuid.UUID
 	ChatID   uuid.UUID
+	Name     string
 	Role     ChatParticipantRole
 	JoinedAt time.Time
+
+	Avatar Avatar
 }
 
 func NewChatParticipant(

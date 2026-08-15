@@ -262,7 +262,7 @@ func (c *Controller) RemoveParticipant(ctx context.Context, chatID, userID uuid.
 	return c.repo.RemoveParticipant(ctx, chatID, userID)
 }
 
-func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]model.User, error) {
+func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]model.ChatParticipant, error) {
 	if chatID == uuid.Nil {
 		return nil, chats.ErrChatIDNil
 	}
@@ -277,7 +277,36 @@ func (c *Controller) ListParticipants(ctx context.Context, chatID uuid.UUID) ([]
 		return nil, err
 	}
 
-	return users, nil
+	avs, err := c.users.GetAvatarsForChats(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	log.Printf("Found %d avatars\n", len(avs))
+
+	participants := make([]model.ChatParticipant, len(users))
+
+	if len(users) != len(ids) {
+		panic("len(users) != len(ids)")
+	}
+	for i, u := range users {
+		participants[i].UserID = u.ID
+		participants[i].ChatID = chatID
+		participants[i].Name = u.Username
+		log.Printf("Participant name: %s\n", u.Username)
+		// Now every one is admin
+		participants[i].Role = model.ChatParticipantAdmin
+
+		for j := range avs {
+			log.Printf("Avatar for owner %v\n", avs[j].OwnerID)
+			if avs[j].OwnerID == u.ID {
+				log.Printf("Avatar found for owner %v\n", avs[j].OwnerID)
+				participants[i].Avatar = avs[j]
+			}
+		}
+	}
+
+	return participants, nil
 }
 
 func (c *Controller) GetParticipant(ctx context.Context, chatID uuid.UUID, userID uuid.UUID) (

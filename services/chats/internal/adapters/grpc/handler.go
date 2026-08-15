@@ -268,7 +268,11 @@ func (h *Handler) ListParticipants(ctx context.Context, req *chatspb.ListPartici
 	resp := &chatspb.ListParticipantsResponse{}
 
 	for _, p := range participants {
-		resp.Users = append(resp.Users, model.UserToProto(&p))
+		pProto, err := model.ChatParticipantToProto(&p)
+		if err != nil {
+			return nil, status.Error(codes.Internal, err.Error())
+		}
+		resp.Users = append(resp.Users, pProto)
 	}
 
 	return resp, nil
